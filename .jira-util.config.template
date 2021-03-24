@@ -1,0 +1,10 @@
+[JIRA]
+# See https://support.atlassian.com/atlassian-account/docs/manage-api-tokens-for-your-atlassian-account/
+USER =
+API_TOKEN =
+BASE_URL = your_organization.atlassian.net
+PROJECT = JIRA_SLUG
+SCRUM_NAME = scrum_name
+SCRUM_FIELD = customfield_11558
+EPIC_FIELD = customfield_10150
+EPIC_NAME_FIELD = customfield_10151
