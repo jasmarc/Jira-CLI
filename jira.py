@@ -28,7 +28,7 @@ class JiraAPI(object):
         except Exception as ex:
             msg = f'Check your VPN connection and that user and api token are specified in the config\n{r.json()}'
             raise Exception(msg) from ex
-        return r.json()
+        return r.json() if r.text else None
 
     def get_comment(self, ticket):
         return self._api_request('GET', '/rest/api/2/issue/{}/comment', ticket)
@@ -38,6 +38,17 @@ class JiraAPI(object):
 
     def get_ticket(self, ticket):
         return self._api_request('GET', '/rest/api/2/issue/{}', ticket)
+
+    def _set_parent(self, parent):
+        return {'issuelinks': [{
+            'add': {
+                'type': {'name': 'Initiative', 'inward': 'Parent of', 'outward': 'Child of'},
+                'inwardIssue': {'key': parent}
+            }
+        }]}
+
+    def set_parent(self, ticket, parent):
+        return self._api_request('PUT', '/rest/api/2/issue/{}', ticket, json={'update': self._set_parent(parent)})
 
     def create_ticket(self, title, description, issue_type='Story', epic=None, parent=None):
         body = {'fields': {
@@ -57,11 +68,6 @@ class JiraAPI(object):
             body['fields'].update({self.epic_field: epic})
 
         if parent:
-            body['update'] = {'issuelinks': [{
-                'add': {
-                    'type': {'name': 'Initiative', 'inward': 'Parent of', 'outward': 'Child of'},
-                    'inwardIssue': {'key': parent}
-                }
-            }]}
+            body['update'] = self._set_parent(parent)
 
         return self._api_request('POST', '/rest/api/2/issue', json=body)

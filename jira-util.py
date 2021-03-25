@@ -71,6 +71,8 @@ def create_tickets_from_file(jira_api, input_file, verbose=False):
         if issue_type == 'Deliverable':
             deliverable = ticket_id
         elif issue_type == 'Epic':
+            if _existing_ticket() and deliverable:
+                jira_api.set_parent(ticket_id, deliverable)
             epic = ticket_id
 
         if verbose:
