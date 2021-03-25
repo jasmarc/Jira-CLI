@@ -2,6 +2,7 @@ import argparse
 import configparser
 import json
 import os
+import re
 import sys
 
 from jira import JiraAPI
@@ -39,6 +40,23 @@ Deliverable: Lorem ipsum dolor sit amet, consectetur
 
 
 def create_tickets_from_file(jira_api, input_file, verbose=False):
+    def _existing_ticket():
+        match = re.match('^[A-Z]+-[0-9]+', summary)
+        return match.group() if match else None
+
+    def _create_ticket():
+        return jira_api.create_ticket(summary, summary, issue_type=issue_type,
+                                      epic=epic if issue_type == 'Story' else None,
+                                      parent=deliverable if issue_type == 'Epic' else None)['key']
+
+    def _verbose_output():
+        created_or_found = 'Found' if _existing_ticket() else 'Created'
+        return {
+            'Deliverable': f'{created_or_found} {issue_type} {ticket_id}',
+            'Epic': f'\t{created_or_found} {issue_type} {ticket_id}, parent deliverable is {deliverable}',
+            'Story': f'\t\t{created_or_found} {issue_type} {ticket_id}, epic is {epic}',
+        }[issue_type]
+
     deliverable, epic = None, None
     for line in input_file:
         line = line.strip()
@@ -48,24 +66,15 @@ def create_tickets_from_file(jira_api, input_file, verbose=False):
 
         issue_type, summary = line.strip().split(': ')
 
-        r = jira_api.create_ticket(summary, summary, issue_type=issue_type,
-                                   epic=epic if issue_type == 'Story' else None,
-                                   parent=deliverable if issue_type == 'Epic' else None)
+        ticket_id = _existing_ticket() or _create_ticket()
 
-        key = r['key']
         if issue_type == 'Deliverable':
-            deliverable = key
-            if verbose:
-                print('Created {} {}'.format(issue_type, key))
+            deliverable = ticket_id
         elif issue_type == 'Epic':
-            epic = key
-            if verbose:
-                print('\tCreated {} {}, parent deliverable is {}'.format(issue_type, key, deliverable))
-        elif issue_type == 'Story':
-            if verbose:
-                print('\t\tCreated {} {}, epic is {}'.format(issue_type, key, epic))
-        else:
-            raise Exception(f'Unknown issue type {issue_type}')
+            epic = ticket_id
+
+        if verbose:
+            print(_verbose_output())
 
 
 def main():

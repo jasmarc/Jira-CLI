@@ -1,5 +1,15 @@
+# Lines with `#` are skipped as comments
 Deliverable: Lorem ipsum dolor sit amet, consectetur
 	Epic: adipiscing elit. Nam eu congue erat.
 		Story: Curabitur venenatis tristique diam.
 		Story: Phasellus at libero placerat, ornare urna
 		Story: eget, blandit lectus. Vestibulum id diam
+	# Epic already exists
+	Epic: MAR-123
+		Story: Quisque pulvinar erat eget diam fermentum, vel
+		Story: bibendum erat rhoncus. Phasellus mauris enim,
+# Deliverable already exists
+Deliverable: MAR-234
+	Epic: Suspendisse viverra vulputate urna, id molestie
+		Story: quam facilisis sit amet. Etiam non viverra
+		Story: sapien. Phasellus non lectus non lectus

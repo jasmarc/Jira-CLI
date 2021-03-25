@@ -57,12 +57,22 @@ python jira-util.py -j MAR-7335
 Example input file:
 
 ```
-# Comment
+# Lines with `#` are skipped as comments
 Deliverable: Lorem ipsum dolor sit amet, consectetur
-    Epic: adipiscing elit. Nam eu congue erat.
-        Story: Curabitur venenatis tristique diam.
-        Story: Phasellus at libero placerat, ornare urna
-        Story: eget, blandit lectus. Vestibulum id diam
+	Epic: adipiscing elit. Nam eu congue erat.
+		Story: Curabitur venenatis tristique diam.
+		Story: Phasellus at libero placerat, ornare urna
+		Story: eget, blandit lectus. Vestibulum id diam
+	# Epic already exists
+	Epic: MAR-123
+		Story: Quisque pulvinar erat eget diam fermentum, vel
+		Story: bibendum erat rhoncus. Phasellus mauris enim,
+# Deliverable already exists
+Deliverable: MAR-234
+	Epic: Suspendisse viverra vulputate urna, id molestie
+		Story: quam facilisis sit amet. Etiam non viverra
+		Story: sapien. Phasellus non lectus non lectus
+
 ```
 
 Given a file in this format you may invoke ticket creation as follows:
@@ -73,9 +83,12 @@ python jira-util.py -v -f example-input.txt
 
 **Notes:**
 
- - Each line should be of the format `issue_type, summary`
- - Valid issues types are `Deliverable`, `Epic`, `Story`
- - Comments, denoted by `#`, and empty lines will be skipped
- - Leading whitespace is ignored
- - Stories followed by Epics will be linked to the Epics they follow
- - Epics followed by Deliverables will be linked to the Deliverables they follow
+ - Each line should be of the format `issue_type, summary`.
+ - Valid issues types are `Deliverable`, `Epic`, `Story`.
+ - Comments, denoted by `#`, and empty lines will be skipped.
+ - Leading whitespace is ignored.
+ - Stories followed by Epics will be linked to the Epics they follow,
+ - Epics followed by Deliverables will be linked to the Deliverables they follow.
+ - If only Stories are present they will be orphaned and not associated with an Epic or Deliverable.
+ - If only Stories and Epics are present the stories will be linked to the Epic(s) but not associated with a Deliverable.
+ - If a ticket id is specified (e.g. `MAR-123`) instead of a summary, that existing ticket will be used instead of creating a new ticket.
