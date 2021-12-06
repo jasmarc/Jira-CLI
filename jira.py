@@ -42,6 +42,12 @@ class JiraAPI(object):
     def get_ticket(self, ticket):
         return self._api_request('GET', '/rest/api/2/issue/{}', ticket)
 
+    def _get_sprint(self, board_id):
+        return self._api_request('GET', 'rest/agile/1.0/board/{}/sprint?state=future', board_id)
+
+    def _get_next_sprint(self, board_id):
+        return self._get_sprint(board_id)['values'][0]['id']
+
     def _set_parent(self, parent):
         return {'issuelinks': [{
             'add': {
@@ -76,5 +82,7 @@ class JiraAPI(object):
 
         if parent:
             body['update'] = self._set_parent(parent)
+
+        body['fields'].update({'customfield_10200': self._get_next_sprint(1530)})
 
         return self._api_request('POST', '/rest/api/2/issue', json=body)
