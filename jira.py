@@ -1,3 +1,4 @@
+import json
 import urllib
 
 import requests
@@ -24,9 +25,11 @@ class JiraAPI(object):
         url = urllib.parse.urlunsplit(('https', self.base, query.format(*args), None, None))
         try:
             r = requests.request(method, url, auth=(self.user, self.api_token), **kwargs)
+            # print(f'\n{r.json()}\n{method} {url}\n{json.dumps(kwargs.get("json"), sort_keys=True, indent=4)}')
             r.raise_for_status()
         except Exception as ex:
-            msg = f'Check your VPN connection and that user and api token are specified in the config\n{r.json()}'
+            msg = f'Check your VPN connection and that user and api token are specified in the config'
+            msg += f'\n{r.json()}\n{method} {url}\n{json.dumps(kwargs.get("json"), sort_keys=True, indent=4)}'
             raise Exception(msg) from ex
         return r.json() if r.text else None
 
