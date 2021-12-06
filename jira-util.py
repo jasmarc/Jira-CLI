@@ -102,9 +102,9 @@ def main():
     if options.get_ticket:
         print(json.dumps(j.get_ticket(options.get_ticket), indent=4, sort_keys=True))
     elif options.create_ticket:
-        print(json.dumps(j.create_ticket(options.create_ticket, scrum_name=options.scrum_name,
-                                         project=options.project, issue_type=options.issue_type),
-                         indent=4, sort_keys=True))
+        response = j.create_ticket(options.create_ticket, scrum_name=options.scrum_name,
+                                         project=options.project, issue_type=options.issue_type, epic=options.epic)
+        print('{}/browse/{}'.format(self.base.replace('-rest', ''), response['key']))
     elif options.filename:
         create_tickets_from_file(j, options.filename, options.scrum_name, verbose=options.verbose)
     else:
