@@ -33,6 +33,8 @@ Deliverable: Lorem ipsum dolor sit amet, consectetur
                         help='return the ticket info as json')
     parser.add_argument('-c', '--create-ticket', metavar='Summary', type=str, dest='create_ticket',
                         help='create a new ticket with the given summary')
+    parser.add_argument('-e', '--epic', metavar='epic', default=None, type=str, dest='epic',
+                        help='set the epic to file the story under')
     parser.add_argument('-s', '--scrum', metavar='scrum-team', default=None, type=str, dest='scrum_name',
                         help='override the default scrum team from the config')
     parser.add_argument('-p', '--project', metavar='project', default=None, type=str, dest='project',
