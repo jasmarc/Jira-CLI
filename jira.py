@@ -50,19 +50,23 @@ class JiraAPI(object):
     def set_parent(self, ticket, parent):
         return self._api_request('PUT', '/rest/api/2/issue/{}', ticket, json={'update': self._set_parent(parent)})
 
-    def create_ticket(self, title, description, issue_type='Story', epic=None, parent=None):
+    def set_epic(self, ticket, parent_epic):
+        return self._api_request('PUT', '/rest/api/2/issue/{}', ticket, json={'fields': {self.epic_field: parent_epic}})
+
+    def create_ticket(self, title, description=None, issue_type=None, epic=None, parent=None,
+                      scrum_name=None, project=None):
         body = {'fields': {
-            'project': {'key': self.project},
+            'project': {'key': project or self.project},
             'summary': title,
-            'description': description,
-            'issuetype': {'name': issue_type}
+            'description': description or title,
+            'issuetype': {'name': issue_type or 'Story'}
         }}
 
         if issue_type == 'Epic':
             body['fields'].update({self.epic_name_field: title})
 
-        if self.scrum_name:
-            body['fields'].update({self.scrum_field: [self.scrum_name]})
+        if (scrum_name or self.scrum_name) and scrum_name != 'None':
+            body['fields'].update({self.scrum_field: [scrum_name or self.scrum_name]})
 
         if epic:
             body['fields'].update({self.epic_field: epic})
