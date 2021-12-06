@@ -28,18 +28,26 @@ Deliverable: Lorem ipsum dolor sit amet, consectetur
         Story: Phasellus at libero placerat, ornare urna
         Story: eget, blandit lectus. Vestibulum id diam
         """, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("-f", "--filename", type=argparse.FileType('r'), help="name of file containing ticket info")
-    parser.add_argument("-j", "--get-ticket-json", metavar='MAR-123', type=str, dest='ticket',
-                        help="return the ticket info as json")
-    parser.add_argument("-v", "--verbose", default=False, action='store_true', help="display verbose output")
+    parser.add_argument('-f', '--filename', type=argparse.FileType('r'), help='name of file containing ticket info')
+    parser.add_argument('-j', '--get-ticket-json', metavar='MAR-123', type=str, dest='get_ticket',
+                        help='return the ticket info as json')
+    parser.add_argument('-c', '--create-ticket', metavar='Summary', type=str, dest='create_ticket',
+                        help='create a new ticket with the given summary')
+    parser.add_argument('-s', '--scrum', metavar='scrum-team', default=None, type=str, dest='scrum_name',
+                        help='override the default scrum team from the config')
+    parser.add_argument('-p', '--project', metavar='project', default=None, type=str, dest='project',
+                        help='override the default project from the config')
+    parser.add_argument('-i', '--issue-type', metavar='issue-type', default=None, type=str, dest='issue_type',
+                        help='override the default project from the config')
+    parser.add_argument('-v', '--verbose', default=False, action='store_true', help='display verbose output')
     opt = parser.parse_args()
-    if not opt.filename and not opt.ticket:
+    if not any([opt.filename, opt.create_ticket, opt.get_ticket]):
         parser.print_help(sys.stderr)
         sys.exit(1)
     return opt
 
 
-def create_tickets_from_file(jira_api, input_file, verbose=False):
+def create_tickets_from_file(jira_api, input_file, scrum_name=None, verbose=False):
     def _existing_ticket():
         match = re.match('^[A-Z]+-[0-9]+', summary)
         return match.group() if match else None
@@ -47,7 +55,8 @@ def create_tickets_from_file(jira_api, input_file, verbose=False):
     def _create_ticket():
         return jira_api.create_ticket(summary, summary, issue_type=issue_type,
                                       epic=epic if issue_type == 'Story' else None,
-                                      parent=deliverable if issue_type == 'Epic' else None)['key']
+                                      parent=deliverable if issue_type == 'Epic' else None,
+                                      scrum_name=scrum_name)['key']
 
     def _verbose_output():
         created_or_found = 'Found' if _existing_ticket() else 'Created'
@@ -74,6 +83,8 @@ def create_tickets_from_file(jira_api, input_file, verbose=False):
             if _existing_ticket() and deliverable:
                 jira_api.set_parent(ticket_id, deliverable)
             epic = ticket_id
+        elif issue_type == 'Story' and _existing_ticket() and epic:
+            jira_api.set_epic(ticket_id, epic)
 
         if verbose:
             print(_verbose_output())
@@ -85,10 +96,14 @@ def main():
 
     j = JiraAPI(config, config_section='JIRA')
 
-    if options.ticket:
-        print(json.dumps(j.get_ticket(options.ticket), indent=4, sort_keys=True))
+    if options.get_ticket:
+        print(json.dumps(j.get_ticket(options.get_ticket), indent=4, sort_keys=True))
+    elif options.create_ticket:
+        print(json.dumps(j.create_ticket(options.create_ticket, scrum_name=options.scrum_name,
+                                         project=options.project, issue_type=options.issue_type),
+                         indent=4, sort_keys=True))
     elif options.filename:
-        create_tickets_from_file(j, options.filename, verbose=options.verbose)
+        create_tickets_from_file(j, options.filename, options.scrum_name, verbose=options.verbose)
     else:
         raise Exception('Invalid arguments.')
 
