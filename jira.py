@@ -83,6 +83,7 @@ class JiraAPI(object):
         if parent:
             body['update'] = self._set_parent(parent)
 
+        body['fields'].update({'priority': {'name': 'P3'}})
         body['fields'].update({'customfield_10200': self._get_next_sprint(1530)})
 
         return self._api_request('POST', '/rest/api/2/issue', json=body)
