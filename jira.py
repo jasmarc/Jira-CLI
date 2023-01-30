@@ -20,11 +20,14 @@ class JiraAPI(object):
         self.scrum_field = config.get(config_section, 'SCRUM_FIELD')
         self.epic_field = config.get(config_section, 'EPIC_FIELD')
         self.epic_name_field = config.get(config_section, 'EPIC_NAME_FIELD')
+        self.sprint_field = config.get(config_section, 'SPRINT_FIELD')
+        self.board_id = config.get(config_section, 'BOARD_ID')
+        self.priority = config.get(config_section, 'PRIORITY')
 
     def _api_request(self, method, query, *args, **kwargs):
         url = urllib.parse.urlunsplit(('https', self.base, query.format(*args), None, None))
         try:
-            r = requests.request(method, url, auth=(self.user, self.api_token), **kwargs)
+            r = requests.request(method, url, headers={'Authorization': f'Bearer {self.api_token}'}, **kwargs)
             # print(f'\n{r.json()}\n{method} {url}\n{json.dumps(kwargs.get("json"), sort_keys=True, indent=4)}')
             r.raise_for_status()
         except Exception as ex:
@@ -75,7 +78,7 @@ class JiraAPI(object):
             body['fields'].update({self.epic_name_field: title})
 
         if (scrum_name or self.scrum_name) and scrum_name != 'None':
-            body['fields'].update({self.scrum_field: [scrum_name or self.scrum_name]})
+            body['fields'].update({self.scrum_field: {'value': scrum_name or self.scrum_name}})
 
         if epic:
             body['fields'].update({self.epic_field: epic})
@@ -83,7 +86,7 @@ class JiraAPI(object):
         if parent:
             body['update'] = self._set_parent(parent)
 
-        body['fields'].update({'priority': {'name': 'P3'}})
-        body['fields'].update({'customfield_10200': self._get_next_sprint(1530)})
+        body['fields'].update({'priority': {'name': self.priority}})
+        body['fields'].update({self.sprint_field: self._get_next_sprint(self.board_id)})
 
         return self._api_request('POST', '/rest/api/2/issue', json=body)
