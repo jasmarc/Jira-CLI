@@ -103,7 +103,7 @@ def main():
         print(json.dumps(j.get_ticket(options.get_ticket), indent=4, sort_keys=True))
     elif options.create_ticket:
         response = j.create_ticket(options.create_ticket, scrum_name=options.scrum_name,
-                                         project=options.project, issue_type=options.issue_type, epic=options.epic)
+                                   project=options.project, issue_type=options.issue_type, epic=options.epic)
         print('https://{}/browse/{}'.format(j.base, response['key']))
     elif options.filename:
         create_tickets_from_file(j, options.filename, options.scrum_name, verbose=options.verbose)
