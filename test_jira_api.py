@@ -5,11 +5,10 @@ from jira import JiraAPI
 
 
 class TestJiraAPI(unittest.TestCase):
-
     def setUp(self):
         # Load config from INI for testing
         config = configparser.ConfigParser()
-        config.read('.jira-util.config')
+        config.read(".jira-util.config")
 
         # Initialize JiraAPI instance with test config
         self.jira_api = JiraAPI(config)
@@ -30,14 +29,14 @@ class TestJiraAPI(unittest.TestCase):
         self.assertEqual(len(custom_fields), 3)  # Ensure there are two custom fields
 
         expected_custom_fields = {
-            'customfield_12345': 'foo',
-            'customfield_13455': 'bar',
-            'customfield_13456': 'baz',
+            "customfield_12345": "foo",
+            "customfield_13455": "bar",
+            "customfield_13456": "baz",
         }
 
         for expected_field in expected_custom_fields:
             self.assertIn(expected_field, custom_fields)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()
