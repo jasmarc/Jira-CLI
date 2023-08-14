@@ -7,6 +7,8 @@ import sys
 
 from jira import JiraAPI
 
+REGULAR_ISSUE_TYPES = ['Story', 'Task', 'Spike', 'Bug']
+
 SCRIPT_CONFIG = os.path.join(os.path.dirname(__file__), '.jira-util.config')
 
 
@@ -61,13 +63,15 @@ def create_tickets_from_file(jira_api, input_file, scrum_name=None, verbose=Fals
                                       scrum_name=scrum_name)['key']
 
     def _verbose_output():
+        url = 'https://{}/browse/{}'.format(jira_api.base, ticket_id)
+
         created_or_found = 'Found' if _existing_ticket() else 'Created'
-        return {
-            'Deliverable': f'{created_or_found} {issue_type} {ticket_id}',
-            'Epic': f'\t{created_or_found} {issue_type} {ticket_id}, parent deliverable is {deliverable}',
-            'Story': f'\t\t{created_or_found} {issue_type} {ticket_id}, epic is {epic}',
-            'Task': f'\t\t{created_or_found} {issue_type} {ticket_id}, epic is {epic}',
-        }[issue_type]
+        if issue_type == 'Epic':
+            return f'\t{created_or_found} {issue_type} {url}'
+        elif issue_type in REGULAR_ISSUE_TYPES:
+            return f'\t\t{created_or_found} {issue_type} {url}, epic is {epic}'
+        else:
+            raise ValueError(f'Unknown issue type {issue_type}')
 
     deliverable, epic = None, None
     for line in input_file:
@@ -80,13 +84,9 @@ def create_tickets_from_file(jira_api, input_file, scrum_name=None, verbose=Fals
 
         ticket_id = _existing_ticket() or _create_ticket()
 
-        if issue_type == 'Deliverable':
-            deliverable = ticket_id
-        elif issue_type == 'Epic':
-            if _existing_ticket() and deliverable:
-                jira_api.set_parent(ticket_id, deliverable)
+        if issue_type == 'Epic':
             epic = ticket_id
-        elif issue_type in ['Story', 'Task'] and _existing_ticket() and epic:
+        elif issue_type in REGULAR_ISSUE_TYPES and _existing_ticket() and epic:
             jira_api.set_epic(ticket_id, epic)
 
         if verbose:
