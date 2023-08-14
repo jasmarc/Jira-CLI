@@ -1,0 +1,5 @@
+extends: default
+
+rules:
+  line-length:
+    max: 120 # Adjust this based on your preferred line length

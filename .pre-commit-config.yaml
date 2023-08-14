@@ -1,0 +1,93 @@
+---
+default_stages: [commit]
+repos:
+  - repo: https://github.com/psf/black
+    rev: 23.1.0
+    hooks:
+    - id: black
+      types: [file, python]
+  - repo: https://github.com/timothycrosley/isort
+    rev: 5.12.0
+    hooks:
+    - id: isort
+  - repo: https://github.com/pycqa/flake8
+    rev: 3.9.2
+    hooks:
+    - id: flake8
+      additional_dependencies: ['flake8-bugbear==21.4.3', 'pep8-naming==0.11.1']
+      exclude: (^docs/)
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.0.1
+    hooks:
+    - id: debug-statements
+  - repo: https://github.com/pre-commit/mirrors-prettier
+    rev: v2.7.1
+    hooks:
+      - id: prettier
+        exclude: "(.pre-commit-config.yaml|Pipfile.lock|^vendor/)"
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.4.0
+    hooks:
+      - id: check-added-large-files
+        exclude: (^vendor/)
+      - id: check-json
+        exclude: (^vendor/)
+      - id: check-xml
+        exclude: (^vendor/)
+      - id: check-merge-conflict
+        exclude: (^vendor/)
+      - id: trailing-whitespace
+        exclude: (^vendor/)
+  - repo: https://github.com/alessandrojcm/commitlint-pre-commit-hook
+    rev: v5.0.0
+    hooks:
+      - id: commitlint
+        stages: [commit-msg]
+        args: [--config, /app/config/default/.commitlintrc.js]
+  - repo: https://github.com/hadolint/hadolint
+    rev: v2.12.0
+    hooks:
+      - id: hadolint
+  - repo: https://github.com/igorshubovych/markdownlint-cli
+    rev: v0.33.0
+    hooks:
+      - id: markdownlint
+        args: [--config, .markdownlint.yaml, --fix]
+        exclude: (^.github/|^vendor/)
+  - repo: https://github.com/adrienverge/yamllint
+    rev: v1.29.0
+    hooks:
+      - id: yamllint
+        files: \.(yaml|yml)$
+        types: [file]
+        args: [-c, yamllint.yaml]
+        exclude: (.pre-commit-config.yaml|^vendor/)
+  - repo: https://github.com/crate-ci/typos
+    rev: v1.16.5
+    hooks:
+      - id: typos
+        exclude: (.pre-commit-config.yaml|^vendor/)
+  - repo: https://github.com/ducminh-phan/reformat-gherkin
+    rev: v3.0.1
+    hooks:
+      - id: reformat-gherkin
+        args: [--tab-width, '4']
+        files: \.feature$
+        exclude: (^.github/|^vendor/)
+  - repo: https://github.com/asottile/pyupgrade
+    rev: v3.3.1
+    hooks:
+    - id: pyupgrade
+      args: [--py38-plus]
+  - repo: https://github.com/wemake-services/eradicate
+    rev: 2.2.0
+    hooks:
+      - id: eradicate
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.1.1
+    hooks:
+    - id: mypy
+      files: \.py$
+      additional_dependencies:
+        - types-PyYAML
+        - types-requests
