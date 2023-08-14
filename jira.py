@@ -49,7 +49,9 @@ class JiraAPI(object):
         return self._api_request('GET', 'rest/agile/1.0/board/{}/sprint?state=future', board_id)
 
     def _get_next_sprint(self, board_id):
-        return self._get_sprint(board_id)['values'][0]['id']
+        upcoming_sprints = self._get_sprint(board_id).get('values', [])
+        next_sprint = next(iter(upcoming_sprints), {})
+        return next_sprint.get('id', None)
 
     def _set_parent(self, parent):
         return {'issuelinks': [{
@@ -87,6 +89,10 @@ class JiraAPI(object):
             body['update'] = self._set_parent(parent)
 
         body['fields'].update({'priority': {'name': self.priority}})
-        body['fields'].update({self.sprint_field: self._get_next_sprint(self.board_id)})
+
+        if issue_type != 'Epic':
+            next_sprint = self._get_next_sprint(self.board_id)
+            if next_sprint:
+                body['fields'].update({self.sprint_field: next_sprint})
 
         return self._api_request('POST', '/rest/api/2/issue', json=body)
