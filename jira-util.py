@@ -108,7 +108,7 @@ def main():
     elif options.filename:
         create_tickets_from_file(j, options.filename, options.scrum_name, verbose=options.verbose)
     else:
-        raise Exception('Invalid arguments.')
+        raise ValueError('Invalid arguments.')
 
 
 if __name__ == '__main__':
