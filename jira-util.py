@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import argparse
 import configparser
 import json
@@ -12,13 +14,13 @@ REGULAR_ISSUE_TYPES = ["Story", "Task", "Spike", "Bug"]
 SCRIPT_CONFIG = os.path.join(os.path.dirname(__file__), ".jira-util.config")
 
 
-def read_script_config(config_file):
+def read_script_config(config_file: str) -> configparser.ConfigParser:
     c = configparser.ConfigParser()
     c.read(config_file)
     return c
 
 
-def parse_script_arguments():
+def parse_script_arguments() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="""CLI for interacting with Jira.
 
@@ -105,23 +107,31 @@ Deliverable: Lorem ipsum dolor sit amet, consectetur
     return opt
 
 
-def existing_ticket(summary):
+def existing_ticket(summary: str) -> str | None:
     match = re.match("^[A-Z]+-[0-9]+", summary)
     return match.group() if match else None
 
 
-def create_ticket(jira_api, summary, issue_type, epic):
+def create_ticket(
+    jira_api: JiraAPI,
+    summary: str,
+    issue_type: str,
+    epic: str | None,
+    project: str | None,
+) -> str:
     return jira_api.create_ticket(
         summary,
         summary,
         issue_type=issue_type,
         epic=epic if issue_type in REGULAR_ISSUE_TYPES else None,
+        project=project,
     )["key"]
 
 
-def verbose_output(jira_api, summary, ticket_id, issue_type, epic):
+def verbose_output(
+    jira_api: JiraAPI, summary: str, ticket_id: str, issue_type: str, epic: str | None
+) -> str:
     url = f"https://{jira_api.base}/browse/{ticket_id}"
-
     created_or_found = "Found" if existing_ticket(summary) else "Created"
     if issue_type == "Epic":
         return f"\t{created_or_found} {issue_type} {url}"
@@ -131,7 +141,12 @@ def verbose_output(jira_api, summary, ticket_id, issue_type, epic):
         raise ValueError(f"Unknown issue type {issue_type}")
 
 
-def create_tickets_from_file(jira_api, input_file, verbose=False):
+def create_tickets_from_file(
+    jira_api: JiraAPI,
+    input_file: str,
+    verbose: bool = False,
+    project: str | None = None,
+) -> None:
     epic = None
     for line in input_file:
         line = line.strip()
@@ -142,7 +157,7 @@ def create_tickets_from_file(jira_api, input_file, verbose=False):
         issue_type, summary = line.strip().split(": ")
 
         ticket_id = existing_ticket(summary) or create_ticket(
-            jira_api, summary, issue_type, epic
+            jira_api, summary, issue_type, epic, project
         )
 
         if issue_type == "Epic":
@@ -154,7 +169,7 @@ def create_tickets_from_file(jira_api, input_file, verbose=False):
             print(verbose_output(jira_api, summary, ticket_id, issue_type, epic))
 
 
-def main():
+def main() -> None:
     config = read_script_config(SCRIPT_CONFIG)
     options = parse_script_arguments()
 
@@ -165,7 +180,7 @@ def main():
     elif options.create_ticket:
         response = j.create_ticket(
             options.create_ticket,
-            scrum_name=options.scrum_name,
+            options.create_ticket,
             project=options.project,
             issue_type=options.issue_type,
             epic=options.epic,

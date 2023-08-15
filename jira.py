@@ -1,5 +1,9 @@
+from __future__ import annotations
+
+import configparser
 import json
 import urllib
+from typing import Any, Dict
 
 import requests
 
@@ -10,8 +14,9 @@ class JiraAPI:
     See https://docs.atlassian.com/software/jira/docs/api/REST/8.5.13/
     """
 
-    def __init__(self, config, config_section="JIRA"):
-        super().__init__()
+    def __init__(
+        self, config: configparser.ConfigParser, config_section: str = "JIRA"
+    ) -> None:
         self.base = config.get(config_section, "BASE_URL")
         self.project = config.get(config_section, "PROJECT", fallback="MAR")
         self.user = config.get(config_section, "USER")
@@ -24,7 +29,7 @@ class JiraAPI:
         self.board_id = config.get(config_section, "BOARD_ID")
         self.priority = config.get(config_section, "PRIORITY")
 
-    def _api_request(self, method, query, *args, **kwargs):
+    def _api_request(self, method: str, query: str, *args: str, **kwargs: Any) -> dict:
         url = urllib.parse.urlunsplit(
             ("https", self.base, query.format(*args), None, None)
         )
@@ -41,28 +46,28 @@ class JiraAPI:
             msg = "Check your VPN connection and that user and api token are specified in the config"
             msg += f'\n{r.text}\n{method} {url}\n{json.dumps(kwargs.get("json"), sort_keys=True, indent=4)}'
             raise Exception(msg) from ex
-        return r.json() if r.text else None
+        return r.json() if r.text else {}
 
-    def get_comment(self, ticket):
+    def get_comment(self, ticket: str) -> dict:
         return self._api_request("GET", "/rest/api/2/issue/{}/comment", ticket)
 
-    def add_comment(self, ticket, comment):
+    def add_comment(self, ticket: str, comment: str) -> dict:
         return self._api_request(
             "POST", "/rest/api/2/issue/{}/comment", ticket, json={"body": comment}
         )
 
-    def get_ticket(self, ticket):
+    def get_ticket(self, ticket: str) -> dict:
         return self._api_request("GET", "/rest/api/2/issue/{}", ticket)
 
-    def _get_sprint(self, board_id):
+    def _get_sprint(self, board_id: str) -> dict:
         return self._api_request(
             "GET", "rest/agile/1.0/board/{}/sprint?state=future", board_id
         )
 
-    def _get_next_sprint(self, board_id):
+    def _get_next_sprint(self, board_id: str) -> str:
         upcoming_sprints = self._get_sprint(board_id).get("values", [])
-        next_sprint = next(iter(upcoming_sprints), {})
-        return next_sprint.get("id", None)
+        next_sprint: dict = next(iter(upcoming_sprints), {})
+        return next_sprint.get("id", "")
 
     def _set_parent(self, parent):
         return {
@@ -88,7 +93,7 @@ class JiraAPI:
             json={"update": self._set_parent(parent)},
         )
 
-    def set_epic(self, ticket, parent_epic):
+    def set_epic(self, ticket: str, parent_epic: str) -> dict:
         return self._api_request(
             "PUT",
             "/rest/api/2/issue/{}",
@@ -98,14 +103,12 @@ class JiraAPI:
 
     def create_ticket(
         self,
-        title,
-        description=None,
-        issue_type=None,
-        epic=None,
-        parent=None,
-        scrum_name=None,
-        project=None,
-    ):
+        title: str,
+        description: str | None,
+        issue_type: str | None,
+        epic: str | None,
+        project: str | None,
+    ) -> dict:
         body = {
             "fields": {
                 "project": {"key": project or self.project},
