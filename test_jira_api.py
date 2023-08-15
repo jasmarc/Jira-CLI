@@ -5,7 +5,7 @@ from jira import JiraAPI
 
 
 class TestJiraAPI(unittest.TestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         # Load config from INI for testing
         config = configparser.ConfigParser()
         config.read(".jira-util.config")
@@ -24,9 +24,9 @@ class TestJiraAPI(unittest.TestCase):
         self.assertEqual(self.jira_api.board_id, "12345")
         self.assertEqual(self.jira_api.priority, "Awaiting Priority")
 
-    def test_custom_fields(self):
-        custom_fields = self.jira_api.custom_fields
-        self.assertEqual(len(custom_fields), 3)  # Ensure there are two custom fields
+    def test_custom_fields(self) -> None:
+        custom_fields: dict[str, str] = self.jira_api.custom_fields
+        self.assertEqual(len(custom_fields), 3)  # Ensure there are three custom fields
 
         expected_custom_fields = {
             "customfield_12345": "foo",
