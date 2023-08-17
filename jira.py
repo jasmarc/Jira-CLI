@@ -41,7 +41,10 @@ class JiraAPI:
         custom_fields = {}
         for field_value_pair in field_value_pairs:
             field, value = field_value_pair.split("=")
-            custom_fields[field] = value
+            try:
+                custom_fields[field] = json.loads(value)
+            except:
+                custom_fields[field] = value
         return custom_fields
 
     def _api_request(self, method: str, query: str, *args: str, **kwargs: Any) -> dict:
