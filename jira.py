@@ -52,6 +52,8 @@ class JiraAPI:
             ("https", self.base, query.format(*args), None, None)
         )
 
+        logging.debug(f'\n{method} {url}\n{json.dumps(kwargs.get("json"), sort_keys=True, indent=4)}')
+
         if self.auth == 'basic':
             auth_string = f"{self.user}:{self.api_token}"
             base64_auth_string = base64.b64encode(auth_string.encode()).decode()
