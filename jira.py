@@ -5,7 +5,8 @@ import configparser
 import json
 import logging
 import urllib
-from typing import Any, Dict
+import urllib.parse
+from typing import Any
 
 import requests
 
