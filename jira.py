@@ -26,6 +26,19 @@ class JiraAPI:
         self.sprint_field = config.get(config_section, "SPRINT_FIELD")
         self.board_id = config.get(config_section, "BOARD_ID")
         self.priority = config.get(config_section, "PRIORITY")
+        self.custom_fields = self._load_custom_fields(config, config_section)
+
+    @staticmethod
+    def _load_custom_fields(
+        config: configparser.ConfigParser, config_section: str
+    ) -> dict:
+        custom_fields_section = config.get(config_section, "CUSTOM_FIELDS")
+        field_value_pairs = custom_fields_section.split(",")
+        custom_fields = {}
+        for field_value_pair in field_value_pairs:
+            field, value = field_value_pair.split("=")
+            custom_fields[field] = value
+        return custom_fields
 
     def _api_request(self, method: str, query: str, *args: str, **kwargs: Any) -> dict:
         url = urllib.parse.urlunsplit(
@@ -131,5 +144,8 @@ class JiraAPI:
             next_sprint = self._get_next_sprint(self.board_id)
             if next_sprint:
                 body["fields"].update({self.sprint_field: next_sprint})
+
+        for field, value in self.custom_fields.items():
+            body["fields"].update({field: value})
 
         return self._api_request("POST", "/rest/api/2/issue", json=body)
