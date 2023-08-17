@@ -51,7 +51,6 @@ class JiraAPI:
                 headers={"Authorization": f"Bearer {self.api_token}"},
                 **kwargs,
             )
-            # print(f'\n{r.json()}\n{method} {url}\n{json.dumps(kwargs.get("json"), sort_keys=True, indent=4)}')
             r.raise_for_status()
         except Exception as ex:
             msg = "Check your VPN connection and that user and api token are specified in the config"
