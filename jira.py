@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import base64
 import configparser
 import json
 import logging
@@ -21,6 +22,7 @@ class JiraAPI:
         self.base = config.get(config_section, "BASE_URL")
         self.project = config.get(config_section, "PROJECT", fallback="MAR")
         self.user = config.get(config_section, "USER")
+        self.auth = config.get(config_section, "AUTH")
         self.api_token = config.get(config_section, "API_TOKEN")
         self.epic_field = config.get(config_section, "EPIC_FIELD")
         self.epic_name_field = config.get(config_section, "EPIC_NAME_FIELD")
@@ -46,11 +48,19 @@ class JiraAPI:
         url = urllib.parse.urlunsplit(
             ("https", self.base, query.format(*args), None, None)
         )
+
+        if self.auth == 'basic':
+            auth_string = f"{self.user}:{self.api_token}"
+            base64_auth_string = base64.b64encode(auth_string.encode()).decode()
+            headers = {"Authorization": f"Basic {base64_auth_string}"}
+        else:
+            headers = {"Authorization": f"Bearer {self.api_token}"}
+
         try:
             r = requests.request(
                 method,
                 url,
-                headers={"Authorization": f"Bearer {self.api_token}"},
+                headers=headers,
                 **kwargs,
             )
             r.raise_for_status()
