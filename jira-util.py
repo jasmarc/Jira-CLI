@@ -28,7 +28,7 @@ If specifying a file, the file should be in the following format:
 
 # Comment
 Deliverable: Lorem ipsum dolor sit amet, consectetur
-    Epic: adipiscing elit. Nam eu congue erat.
+    Epic: adipiscing elit. Name eu congue erat.
         Story: Curabitur venenatis tristique diam.
         Story: Phasellus at libero placerat, ornare urna
         Story: eget, blandit lectus. Vestibulum id diam
