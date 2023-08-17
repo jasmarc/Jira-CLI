@@ -21,8 +21,6 @@ class JiraAPI:
         self.project = config.get(config_section, "PROJECT", fallback="MAR")
         self.user = config.get(config_section, "USER")
         self.api_token = config.get(config_section, "API_TOKEN")
-        self.scrum_name = config.get(config_section, "SCRUM_NAME", fallback=None)
-        self.scrum_field = config.get(config_section, "SCRUM_FIELD")
         self.epic_field = config.get(config_section, "EPIC_FIELD")
         self.epic_name_field = config.get(config_section, "EPIC_NAME_FIELD")
         self.sprint_field = config.get(config_section, "SPRINT_FIELD")
@@ -120,11 +118,6 @@ class JiraAPI:
 
         if issue_type == "Epic":
             body["fields"].update({self.epic_name_field: title})
-
-        if (scrum_name or self.scrum_name) and scrum_name != "None":
-            body["fields"].update(
-                {self.scrum_field: {"value": scrum_name or self.scrum_name}}
-            )
 
         if epic:
             body["fields"].update({self.epic_field: epic})
