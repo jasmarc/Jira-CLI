@@ -60,18 +60,22 @@ class JiraAPI:
             headers = {"Authorization": f"Bearer {self.api_token}"}
 
         try:
-            r = requests.request(
+            response = requests.request(
                 method,
                 url,
                 headers=headers,
                 **kwargs,
             )
-            r.raise_for_status()
-        except Exception as ex:
-            msg = "Check your VPN connection and that user and api token are specified in the config"
-            msg += f'\n{r.text}\n{method} {url}\n{json.dumps(kwargs.get("json"), sort_keys=True, indent=4)}'
-            raise Exception(msg) from ex
-        return r.json() if r.text else {}
+            response.raise_for_status()
+            logging.debug(f'\n{json.dumps(response.json(), sort_keys=True, indent=4)}\n{method} {url}\n{json.dumps(kwargs.get("json"), sort_keys=True, indent=4)}')
+
+        except requests.exceptions.HTTPError as ex:
+            self.logger.error(f"HTTP error {response.status_code}: {response.text}")
+            raise
+        except requests.exceptions.RequestException as ex:
+            self.logger.error(f"Request error: {ex}")
+            raise
+        return response.json() if response.status_code // 100 == 2 else {}
 
     def get_comment(self, ticket: str) -> dict:
         return self._api_request("GET", "/rest/api/2/issue/{}/comment", ticket)
