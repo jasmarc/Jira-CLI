@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import configparser
 import json
+import logging
 import urllib
 from typing import Any, Dict
 
@@ -27,6 +28,7 @@ class JiraAPI:
         self.board_id = config.get(config_section, "BOARD_ID")
         self.priority = config.get(config_section, "PRIORITY")
         self.custom_fields = self._load_custom_fields(config, config_section)
+        self.logger = logging.getLogger(__name__)
 
     @staticmethod
     def _load_custom_fields(

@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import configparser
 import json
+import logging
 import os
 import re
 import sys
@@ -170,6 +171,7 @@ def create_tickets_from_file(
 
 
 def main() -> None:
+    logging.basicConfig(level=logging.DEBUG)
     config = read_script_config(SCRIPT_CONFIG)
     options = parse_script_arguments()
 
