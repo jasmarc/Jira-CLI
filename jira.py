@@ -80,30 +80,6 @@ class JiraAPI:
         next_sprint: dict = next(iter(upcoming_sprints), {})
         return next_sprint.get("id", "")
 
-    def _set_parent(self, parent):
-        return {
-            "issuelinks": [
-                {
-                    "add": {
-                        "type": {
-                            "name": "Initiative",
-                            "inward": "Parent of",
-                            "outward": "Child of",
-                        },
-                        "inwardIssue": {"key": parent},
-                    }
-                }
-            ]
-        }
-
-    def set_parent(self, ticket, parent):
-        return self._api_request(
-            "PUT",
-            "/rest/api/2/issue/{}",
-            ticket,
-            json={"update": self._set_parent(parent)},
-        )
-
     def set_epic(self, ticket: str, parent_epic: str) -> dict:
         return self._api_request(
             "PUT",
@@ -134,9 +110,6 @@ class JiraAPI:
 
         if epic:
             body["fields"].update({self.epic_field: epic})
-
-        if parent:
-            body["update"] = self._set_parent(parent)
 
         body["fields"].update({"priority": {"name": self.priority}})
 
