@@ -28,23 +28,42 @@ optional arguments:
 
 ## Getting Started
 
-- run `brew install pyenv-virtualenv` (see
-  [here](https://github.com/pyenv/pyenv-virtualenv#installing-with-homebrew-for-macos-users)
-  for more details)
-- add these lines to your bash or zsh profile
+- Install `pipenv` if you haven't already:
 
   ```shell
-  eval "$(pyenv init -)"
-  eval "$(pyenv virtualenv-init -)"
+  pip install pipenv
   ```
 
-- run `pyenv install 3.9.0`
-- run `pyenv activate jira-util-3.9.0`
-- run `pip install -r requirements.txt`
-- copy `.jira-util.config.template` to `.jira-util.config`
-- fill out the `USER` and `API_TOKEN` fields (see
-  [here](https://support.atlassian.com/atlassian-account/docs/manage-api-tokens-for-your-atlassian-account/)
+- Navigate to the project directory in your terminal.
+
+- Create a virtual environment and install dependencies using `pipenv`:
+
+  ```shell
+  pipenv install --dev
+  ```
+
+- Copy `.jira-util.config.template` to `.jira-util.config` and open it:
+
+  ```shell
+  cp .jira-util.config.template .jira-util.config
+  ```
+
+- Fill out the `USER` and `API_TOKEN` fields in `.jira-util.config`
+  (see [here](https://support.atlassian.com/atlassian-account/docs/manage-api-tokens-for-your-atlassian-account/)
   for more details).
+
+- Run tests and other tasks using `pipenv`:
+
+  ```shell
+  pipenv run make test
+  # ... other commands ...
+  ```
+
+- When you're done, exit the virtual environment:
+
+  ```shell
+  exit
+  ```
 
 ## Usage
 
