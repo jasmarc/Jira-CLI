@@ -44,7 +44,7 @@ class JiraAPI:
             field, value = field_value_pair.split("=")
             try:
                 custom_fields[field] = json.loads(value)
-            except:
+            except json.JSONDecodeError:
                 custom_fields[field] = value
         return custom_fields
 
@@ -53,9 +53,11 @@ class JiraAPI:
             ("https", self.base, query.format(*args), None, None)
         )
 
-        logging.debug(f'\n{method} {url}\n{json.dumps(kwargs.get("json"), sort_keys=True, indent=4)}')
+        logging.debug(
+            f'\n{method} {url}\n{json.dumps(kwargs.get("json"), sort_keys=True, indent=4)}'
+        )
 
-        if self.auth == 'basic':
+        if self.auth == "basic":
             auth_string = f"{self.user}:{self.api_token}"
             base64_auth_string = base64.b64encode(auth_string.encode()).decode()
             headers = {"Authorization": f"Basic {base64_auth_string}"}
@@ -70,9 +72,11 @@ class JiraAPI:
                 **kwargs,
             )
             response.raise_for_status()
-            logging.debug(f'\n{json.dumps(response.json(), sort_keys=True, indent=4)}\n{method} {url}\n{json.dumps(kwargs.get("json"), sort_keys=True, indent=4)}')
+            logging.debug(
+                f'\n{json.dumps(response.json(), sort_keys=True, indent=4)}\n{method} {url}\n{json.dumps(kwargs.get("json"), sort_keys=True, indent=4)}'
+            )
 
-        except requests.exceptions.HTTPError as ex:
+        except requests.exceptions.HTTPError:
             self.logger.error(f"HTTP error {response.status_code}: {response.text}")
             raise
         except requests.exceptions.RequestException as ex:
