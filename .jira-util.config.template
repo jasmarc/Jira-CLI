@@ -1,10 +1,13 @@
 [JIRA]
 # See https://support.atlassian.com/atlassian-account/docs/manage-api-tokens-for-your-atlassian-account/
-USER =
-API_TOKEN =
-BASE_URL = your_organization.atlassian.net
-PROJECT = JIRA_SLUG
-SCRUM_NAME = scrum_name
-SCRUM_FIELD = customfield_11558
-EPIC_FIELD = customfield_10150
-EPIC_NAME_FIELD = customfield_10151
+USER = test_user@example.com
+AUTH = basic
+API_TOKEN = test_api_token
+BASE_URL = example.com
+PROJECT = TEST
+EPIC_FIELD = customfield_12345
+EPIC_NAME_FIELD = customfield_54321
+SPRINT_FIELD = customfield_67890
+BOARD_ID = 999
+PRIORITY = Medium
+CUSTOM_FIELDS = customfield_11111=CustomValue1,customfield_22222={"accountId": "123456:abcdef123"},customfield_33333={"value": "CustomValue2"}

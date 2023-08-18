@@ -3,9 +3,9 @@ from __future__ import annotations
 import base64
 import json
 import logging
-import os
 import unittest
 from configparser import ConfigParser
+from pathlib import Path
 from unittest.mock import MagicMock, Mock, patch
 
 import requests
@@ -17,7 +17,8 @@ from jira import JiraAPI
 
 class TestJiraAPI(unittest.TestCase):
     def setUp(self) -> None:
-        config_file_path = os.path.join(os.path.dirname(__file__), "test_config.ini")
+        config_file_path = Path(__file__).parent / ".." / ".jira-util.config.template"
+        logging.info(config_file_path)
         self.jira_config = ConfigParser()
         self.jira_config.read(config_file_path)
         self.jira_api = JiraAPI(self.jira_config, config_section="JIRA")
