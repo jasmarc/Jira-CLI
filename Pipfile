@@ -11,6 +11,8 @@ requests = "==2.25.1"
 urllib3 = "==1.26.4"
 parameterized = "==0.8.1"
 requests-mock = "==1.9.1"
+configparser = "*"
+questionary = "*"
 
 [dev-packages]
 coverage = "==5.5"
