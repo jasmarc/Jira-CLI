@@ -78,7 +78,7 @@ class JiraAPI(object):
             body['fields'].update({self.epic_name_field: title})
 
         if (scrum_name or self.scrum_name) and scrum_name != 'None':
-            body['fields'].update({self.scrum_field: [scrum_name or self.scrum_name]})
+            body['fields'].update({self.scrum_field: {'value': scrum_name or self.scrum_name}})
 
         if epic:
             body['fields'].update({self.epic_field: epic})
