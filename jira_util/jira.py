@@ -105,6 +105,16 @@ class JiraAPI:
         next_sprint: dict = next(iter(upcoming_sprints), {})
         return next_sprint.get("id", "")
 
+    def get_active_epics(self) -> list[dict]:
+        jql = f"issuetype = Epic AND project = {self.project}"
+        query_params = {
+            "jql": jql,
+            "fields": "key,summary",
+            "maxResults": 100,  # Adjust this as needed
+        }
+        response = self._api_request("GET", "/rest/api/2/search", params=query_params)
+        return response.get("issues", [])
+
     def set_epic(self, ticket: str, parent_epic: str) -> dict:
         return self._api_request(
             "PUT",
