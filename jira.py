@@ -27,7 +27,7 @@ class JiraAPI(object):
     def _api_request(self, method, query, *args, **kwargs):
         url = urllib.parse.urlunsplit(('https', self.base, query.format(*args), None, None))
         try:
-            r = requests.request(method, url, auth=(self.user, self.api_token), **kwargs)
+            r = requests.request(method, url, headers={'Authorization': f'Bearer {self.api_token}'}, **kwargs)
             # print(f'\n{r.json()}\n{method} {url}\n{json.dumps(kwargs.get("json"), sort_keys=True, indent=4)}')
             r.raise_for_status()
         except Exception as ex:
