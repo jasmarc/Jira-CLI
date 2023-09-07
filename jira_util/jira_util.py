@@ -4,18 +4,21 @@ import argparse
 import configparser
 import json
 import logging
-import os
 import re
 import sys
+from pathlib import Path
 
-from jira import JiraAPI
+from jira_util.interactive import create_interactive_ticket
+from jira_util.jira import JiraAPI
 
 REGULAR_ISSUE_TYPES = ["Story", "Task", "Spike", "Bug"]
 
-SCRIPT_CONFIG = os.path.join(os.path.dirname(__file__), ".jira-util.config")
+# TODO: use same constants as in generate_config.py
+SCRIPT_CONFIG = Path(__file__).resolve().parent / ".." / ".jira-util.config"
+SCRIPT_CONFIG_HOME = Path.home() / ".jira-util.config"
 
 
-def read_script_config(config_file: str) -> configparser.ConfigParser:
+def read_script_config(config_file: Path) -> configparser.ConfigParser:
     c = configparser.ConfigParser()
     c.read(config_file)
     return c
@@ -95,6 +98,18 @@ Deliverable: Lorem ipsum dolor sit amet, consectetur
         help="override the default project from the config",
     )
     parser.add_argument(
+        "--env",
+        dest="config_section",
+        default="default",
+        help="Specify the environment to use for configuration",
+    )
+    parser.add_argument(
+        "--interactive",
+        default=False,
+        action="store_true",
+        help="create a Jira ticket interactively",
+    )
+    parser.add_argument(
         "-v",
         "--verbose",
         default=False,
@@ -102,7 +117,7 @@ Deliverable: Lorem ipsum dolor sit amet, consectetur
         help="display verbose output",
     )
     opt = parser.parse_args()
-    if not any([opt.filename, opt.create_ticket, opt.get_ticket]):
+    if not any([opt.filename, opt.create_ticket, opt.get_ticket, opt.interactive]):
         parser.print_help(sys.stderr)
         sys.exit(1)
     return opt
@@ -114,11 +129,11 @@ def existing_ticket(summary: str) -> str | None:
 
 
 def create_ticket(
-    jira_api: JiraAPI,
-    summary: str,
-    issue_type: str,
-    epic: str | None,
-    project: str | None,
+        jira_api: JiraAPI,
+        summary: str,
+        issue_type: str,
+        epic: str | None,
+        project: str | None,
 ) -> str:
     return jira_api.create_ticket(
         summary,
@@ -130,7 +145,7 @@ def create_ticket(
 
 
 def verbose_output(
-    jira_api: JiraAPI, summary: str, ticket_id: str, issue_type: str, epic: str | None
+        jira_api: JiraAPI, summary: str, ticket_id: str, issue_type: str, epic: str | None
 ) -> str:
     url = f"https://{jira_api.base}/browse/{ticket_id}"
     created_or_found = "Found" if existing_ticket(summary) else "Created"
@@ -143,10 +158,10 @@ def verbose_output(
 
 
 def create_tickets_from_file(
-    jira_api: JiraAPI,
-    input_file: str,
-    verbose: bool = False,
-    project: str | None = None,
+        jira_api: JiraAPI,
+        input_file: str,
+        verbose: bool = False,
+        project: str | None = None,
 ) -> None:
     epic = None
     for line in input_file:
@@ -172,13 +187,23 @@ def create_tickets_from_file(
 
 def main() -> None:
     logging.basicConfig(level=logging.DEBUG)
-    config = read_script_config(SCRIPT_CONFIG)
-    options = parse_script_arguments()
 
-    j = JiraAPI(config, config_section="JIRA")
+    # Try loading the configuration from SCRIPT_CONFIG_HOME
+    try:
+        config = read_script_config(SCRIPT_CONFIG_HOME)
+    except FileNotFoundError:
+        # If not found, load from SCRIPT_CONFIG
+        config = read_script_config(SCRIPT_CONFIG)
+
+    options = parse_script_arguments()
+    logging.info(options.interactive)
+
+    j = JiraAPI(config, config_section=options.config_section)
 
     if options.get_ticket:
         print(json.dumps(j.get_ticket(options.get_ticket), indent=4, sort_keys=True))
+    elif options.interactive:
+        create_interactive_ticket(j)
     elif options.create_ticket:
         response = j.create_ticket(
             options.create_ticket,
