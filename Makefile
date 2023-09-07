@@ -7,4 +7,7 @@ test:
 format:
 	pre-commit run -a
 
-.PHONY: test format
+build:
+	python setup.py sdist bdist_wheel
+
+.PHONY: test format build
