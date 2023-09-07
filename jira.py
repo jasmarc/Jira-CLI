@@ -20,6 +20,9 @@ class JiraAPI(object):
         self.scrum_field = config.get(config_section, 'SCRUM_FIELD')
         self.epic_field = config.get(config_section, 'EPIC_FIELD')
         self.epic_name_field = config.get(config_section, 'EPIC_NAME_FIELD')
+        self.sprint_field = config.get(config_section, 'SPRINT_FIELD')
+        self.board_id = config.get(config_section, 'BOARD_ID')
+        self.priority = config.get(config_section, 'PRIORITY')
 
     def _api_request(self, method, query, *args, **kwargs):
         url = urllib.parse.urlunsplit(('https', self.base, query.format(*args), None, None))
@@ -83,7 +86,7 @@ class JiraAPI(object):
         if parent:
             body['update'] = self._set_parent(parent)
 
-        body['fields'].update({'priority': {'name': 'P3'}})
-        body['fields'].update({'customfield_10200': self._get_next_sprint(1530)})
+        body['fields'].update({'priority': {'name': self.priority}})
+        body['fields'].update({self.sprint_field: self._get_next_sprint(self.board_id)})
 
         return self._api_request('POST', '/rest/api/2/issue', json=body)
