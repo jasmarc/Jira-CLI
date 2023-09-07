@@ -12,7 +12,7 @@ import requests
 import requests_mock
 from parameterized import parameterized
 
-from jira import JiraAPI
+from jira_util.jira import JiraAPI
 
 
 class TestJiraAPI(unittest.TestCase):
@@ -335,7 +335,7 @@ class TestJiraAPI(unittest.TestCase):
             json=response_json,
         )
 
-        with self.assertLogs("jira", level=logging.ERROR) as cm:
+        with self.assertLogs("jira_util", level=logging.ERROR) as cm:
             with self.assertRaises(
                 requests.exceptions.RequestException
                 if exception_to_raise
@@ -346,7 +346,7 @@ class TestJiraAPI(unittest.TestCase):
                 )
 
         if exception_to_raise:
-            self.assertIn(f"ERROR:jira:{exception_message}", cm.output[0])
+            self.assertIn(f"ERROR:jira_util.jira:{exception_message}", cm.output[0])
 
         exception = context.exception
         self.assertEqual(exception.response.status_code, status_code)

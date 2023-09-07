@@ -7,7 +7,7 @@ from urllib.parse import urlparse
 
 import questionary
 
-CONFIG_FILE = ".jira-util.config"
+CONFIG_FILE = "../.jira-util.config"
 CONFIG_FILE_HOME = os.path.expanduser("~/.jira-util.config")
 
 
