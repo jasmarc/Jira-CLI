@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import configparser
 import json
 import os
@@ -9,13 +11,13 @@ CONFIG_FILE = ".jira-util.config"
 CONFIG_FILE_HOME = os.path.expanduser("~/.jira-util.config")
 
 
-def read_config(config_file):
+def read_config(config_file: str) -> configparser.ConfigParser:
     c = configparser.ConfigParser()
     c.read(config_file)
     return c
 
 
-def get_config_file_location():
+def get_config_file_location() -> str:
     selected_location = questionary.select(
         "Write the config file in:", choices=["Current Directory", "Home Directory"]
     ).ask()
@@ -23,29 +25,32 @@ def get_config_file_location():
     return "current" if selected_location == "Current Directory" else "home"
 
 
-def validate_base_url(url):
+def validate_base_url(url: str) -> str | bool:
     if not urlparse(url).netloc and not urlparse(f"https://{url}").netloc:
         return "Please enter a valid URL"
 
     return True
 
 
-def validate_custom_field_id(field_id):
+def validate_custom_field_id(field_id: str) -> str | bool:
     if not field_id.startswith("customfield_"):
         return "Custom field ID must start with 'customfield_'"
 
     return True  # Validation passed
 
 
-def validate_board_id(board_id):
-    return board_id.isdigit()
+def validate_board_id(board_id: str) -> str | bool:
+    if not board_id.isdigit():
+        return "board_id should be integer"
+
+    return True
 
 
-def get_base_url(default=None):
+def get_base_url(default: str | None = None) -> str:
     return questionary.text("Base URL:", default=default).ask().strip().rstrip("/")
 
 
-def get_api_token(default=None):
+def get_api_token(default: str | None = None) -> str:
     api_token_info = (
         "You can create an API token by following the instructions here:\n"
         "https://support.atlassian.com/atlassian-account/docs/manage-api-tokens-for-your-atlassian-account/"
@@ -56,7 +61,7 @@ def get_api_token(default=None):
     return api_token
 
 
-def get_custom_fields():
+def get_custom_fields() -> dict:
     custom_fields = {}
     while True:
         field_name = questionary.text(
@@ -85,7 +90,7 @@ def get_custom_fields():
     return custom_fields
 
 
-def get_existing_values(section):
+def get_existing_values(section: configparser.SectionProxy) -> dict:
     defaults = {}
     for option in section:
         value = section[option]
@@ -96,10 +101,10 @@ def get_existing_values(section):
     return defaults
 
 
-def ask_new_section_name(existing_sections):
+def ask_new_section_name(existing_sections: list[str]) -> str:
     section_choice = ["Add a new section"]
     section_choice.extend(existing_sections)
-    default_choice = section_choice[0]  # Set the default choice to "Add a new section"
+    default_choice = section_choice[0]
     section_menu = questionary.select(
         "Choose an existing section or add a new one:",
         choices=section_choice,
@@ -112,7 +117,7 @@ def ask_new_section_name(existing_sections):
         return section_menu
 
 
-def main():
+def main() -> None:
     print("Welcome to the Jira Configuration Generator!")
     print(
         "This script will help you create a new configuration section for your Jira settings."
@@ -123,14 +128,12 @@ def main():
 
     print(f"Your config file will be written to: {os.path.abspath(target_file)}")
 
-    config = read_config(
-        target_file
-    )  # Initialize the config object with the existing config file
+    config = read_config(target_file)
 
     new_section_name = ask_new_section_name(config.sections())
 
     if new_section_name not in config.sections():
-        config.add_section(new_section_name)  # Add the section if it doesn't exist
+        config.add_section(new_section_name)
     else:
         use_existing = questionary.confirm(
             f"Section '{new_section_name}' already exists. Do you want to use existing values?"
@@ -141,7 +144,6 @@ def main():
         else:
             print("Aborting...")
             return
-    # Initialize defaults if not present
     defaults = defaults if "defaults" in locals() else {}
 
     print(
@@ -176,15 +178,16 @@ def main():
 
     api_token = get_api_token(default=defaults.get("api_token", ""))
     config.set(new_section_name, "api_token", api_token)
-    base_url = questionary.text(
-        "Base URL:",
-        default=defaults.get("base_url", ""),
-        validate=validate_base_url,
-    ).ask()
 
-    normalized_base_url = urlparse(base_url).netloc
+    base_url = get_base_url(default=defaults.get("base_url", ""))
+    if validate_base_url(base_url):
+        parsed_url = urlparse(base_url)
+        base_url = parsed_url.netloc
+        config.set(new_section_name, "base_url", base_url)
+    else:
+        print("Invalid Base URL. Aborting...")
+        return
 
-    config.set(new_section_name, "base_url", normalized_base_url)
     config.set(
         new_section_name,
         "project",
