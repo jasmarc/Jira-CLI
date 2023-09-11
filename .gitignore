@@ -3,3 +3,7 @@
 __pycache__
 htmlcov
 .coverage
+build/
+dist/
+jira_util.egg-info/
+.DS_Store
