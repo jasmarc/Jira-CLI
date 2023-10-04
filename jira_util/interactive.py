@@ -11,8 +11,7 @@ def get_sprint_choices() -> list:
     return [sprint_choice.value for sprint_choice in SprintPosition]
 
 
-
-def create_interactive_ticket(jira_api: JiraAPI):
+def create_interactive_ticket(jira_api: JiraAPI, project: str) -> dict:
     print("Interactive Jira Ticket Creation")
     print("===============================")
 

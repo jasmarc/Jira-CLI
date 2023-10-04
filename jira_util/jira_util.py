@@ -186,7 +186,7 @@ def main() -> None:
     if options.get_ticket:
         print(json.dumps(j.get_ticket(options.get_ticket), indent=4, sort_keys=True))
     elif options.interactive:
-        create_interactive_ticket(j)
+        response = create_interactive_ticket(j, options.project)
     elif options.create_ticket:
         response = j.create_ticket(
             options.create_ticket,
