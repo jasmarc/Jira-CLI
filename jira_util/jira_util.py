@@ -12,8 +12,6 @@ from jira_util.generate_config import CONFIG_FILE_HOME
 from jira_util.interactive import create_interactive_ticket
 from jira_util.jira import IssueType, JiraAPI, SprintPosition
 
-REGULAR_ISSUE_TYPES = ["Story", "Task", "Spike", "Bug"]
-
 
 def read_script_config(config_file: Path) -> configparser.ConfigParser:
     c = configparser.ConfigParser()
@@ -127,7 +125,7 @@ def create_ticket(
         summary,
         summary,
         issue_type=issue_type,
-        epic=epic if issue_type in REGULAR_ISSUE_TYPES else None,
+        epic=epic if issue_type in IssueType else None,
         project=project,
         sprint_position=SprintPosition.NEXT_SPRINT,
     )["key"]
@@ -140,7 +138,7 @@ def verbose_output(
     created_or_found = "Found" if existing_ticket(summary) else "Created"
     if issue_type == "Epic":
         return f"\t{created_or_found} {issue_type} {url}"
-    elif issue_type in REGULAR_ISSUE_TYPES:
+    elif IssueType.is_valid(issue_type):
         return f"\t\t{created_or_found} {issue_type} {url}, epic is {epic}"
     else:
         raise ValueError(f"Unknown issue type {issue_type}")
@@ -167,7 +165,7 @@ def create_tickets_from_file(
 
         if issue_type == "Epic":
             epic = ticket_id
-        elif issue_type in REGULAR_ISSUE_TYPES and existing_ticket(summary) and epic:
+        elif IssueType.is_valid(issue_type) and existing_ticket(summary) and epic:
             jira_api.set_epic(ticket_id, epic)
 
         if verbose:

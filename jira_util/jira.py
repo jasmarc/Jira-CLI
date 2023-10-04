@@ -13,6 +13,22 @@ from typing import Any
 import requests
 
 
+class IssueType(Enum):
+    STORY = "Story"
+    TASK = "Task"
+    SPIKE = "Spike"
+    BUG = "Bug"
+
+    @classmethod
+    def is_valid(cls, input_string: str) -> bool:
+        """
+        Indicates whether the given string is a valid enum value
+        @param input_string:
+        @return: True if the given string is a valid enum value
+        """
+        return input_string in cls.__members__
+
+
 class SprintPosition(Enum):
     NEXT_SPRINT = "next sprint"
     TOP_OF_BACKLOG = "top of backlog"
