@@ -45,7 +45,7 @@ class JiraAPI:
         self, config: configparser.ConfigParser, config_section: str = "JIRA"
     ) -> None:
         self.base = config.get(config_section, "BASE_URL")
-        self.project = config.get(config_section, "PROJECT", fallback="MAR")
+        self.project = config.get(config_section, "PROJECT")
         self.user = config.get(config_section, "USER")
         self.auth = config.get(config_section, "AUTH")
         self.api_token = config.get(config_section, "API_TOKEN")
