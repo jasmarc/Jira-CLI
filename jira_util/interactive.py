@@ -1,15 +1,15 @@
 import questionary
-from jira_util.jira import JiraAPI
+
+from jira_util.jira import IssueType, JiraAPI, SprintPosition
 
 
+def get_issue_type_choices() -> list:
+    return [issue_type.value for issue_type in IssueType]
 
 
-def get_issue_type_choices():
-    return ["Story", "Task", "Spike", "Bug"]
+def get_sprint_choices() -> list:
+    return [sprint_choice.value for sprint_choice in SprintPosition]
 
-
-def get_sprint_choices():
-    return ["next sprint", "top of backlog", "bottom of backlog"]
 
 
 def create_interactive_ticket(jira_api: JiraAPI):
