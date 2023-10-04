@@ -173,7 +173,7 @@ def create_tickets_from_file(
 
 
 def main() -> None:
-    logging.basicConfig(level=logging.DEBUG)
+    logging.basicConfig(level=logging.INFO)
 
     config = read_script_config(CONFIG_FILE_HOME)
     logging.debug(CONFIG_FILE_HOME)
