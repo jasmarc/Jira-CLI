@@ -186,6 +186,7 @@ def main() -> None:
         print(json.dumps(j.get_ticket(options.get_ticket), indent=4, sort_keys=True))
     elif options.interactive:
         response = create_interactive_ticket(j, options.project)
+        print(f"https://{j.base}/browse/{response['key']}")
     elif options.create_ticket:
         response = j.create_ticket(
             options.create_ticket,
