@@ -68,15 +68,6 @@ Deliverable: Lorem ipsum dolor sit amet, consectetur
         help="set the epic to file the story under",
     )
     parser.add_argument(
-        "-s",
-        "--scrum",
-        metavar="scrum-team",
-        default=None,
-        type=str,
-        dest="scrum_name",
-        help="override the default scrum team from the config",
-    )
-    parser.add_argument(
         "-p",
         "--project",
         metavar="project",
