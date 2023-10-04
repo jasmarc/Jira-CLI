@@ -86,7 +86,7 @@ Deliverable: Lorem ipsum dolor sit amet, consectetur
     parser.add_argument(
         "--env",
         dest="config_section",
-        default="default",
+        default="JIRA",
         help="Specify the environment to use for configuration",
     )
     parser.add_argument(
