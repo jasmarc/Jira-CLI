@@ -130,11 +130,35 @@ class JiraAPI:
         return next_sprint.get("id", "")
 
     def get_active_epics(self) -> list[dict]:
-        jql = f"issuetype = Epic AND project = {self.project}"
+        # Initialize an empty list to store JQL clauses
+        jql_clauses = []
+
+        # Iterate over the dictionary items and format them as JQL clauses
+        for field, value in self.custom_fields.items():
+            field_name = field.replace("customfield_", "")
+            if isinstance(value, dict):
+                # Handle dictionary values
+                value_str = ', '.join([f"'{v}'" for _, v in value.items()])
+                jql_clause = f'cf[{field_name}] = {value_str}'
+            else:
+                # Handle non-dictionary values
+                jql_clause = f'cf[{field_name}] ~ \'{value}\''
+            jql_clauses.append(jql_clause)
+
+        # Join the JQL clauses with ' OR ' to create the final JQL query
+        jql_query = ' OR '.join(jql_clauses)
+
+        jql = f"issuetype = Epic " \
+              f"AND project = {self.project} " \
+              f"AND ({jql_query}) " \
+              f"AND status = 'In Progress' " \
+              f"ORDER BY summary ASC"
+
+        logging.debug({'jql': jql})
         query_params = {
             "jql": jql,
             "fields": "key,summary",
-            "maxResults": 100,  # Adjust this as needed
+            "maxResults": 100,
         }
         response = self._api_request("GET", "/rest/api/2/search", params=query_params)
         return response.get("issues", [])
