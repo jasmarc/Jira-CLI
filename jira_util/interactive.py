@@ -36,15 +36,11 @@ def create_interactive_ticket(jira_api: JiraAPI, project: str) -> dict:
     # Use title as description for simplicity
     description = title
 
-    jira_api.create_ticket(title, description, issue_type=selected_issue_type, epic=selected_epic, sprint=selected_sprint)
-
-    print("Ticket created successfully!")
-
-
-if __name__ == "__main__":
-    # Create a JiraAPI instance using appropriate configuration
-    config = ...  # Load configuration as needed
-    j = JiraAPI(config, config_section="RON")
-
-    # Call the interactive function to create a ticket
-    create_interactive_ticket(j)
+    return jira_api.create_ticket(
+        title,
+        description,
+        issue_type=selected_issue_type,
+        epic=selected_epic,
+        project=project,
+        sprint_position=selected_sprint,
+    )
