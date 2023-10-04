@@ -9,7 +9,7 @@ import sys
 from pathlib import Path
 
 from jira_util.interactive import create_interactive_ticket
-from jira_util.jira import JiraAPI
+from jira_util.jira import IssueType, JiraAPI, SprintPosition
 
 REGULAR_ISSUE_TYPES = ["Story", "Task", "Spike", "Bug"]
 
@@ -141,6 +141,7 @@ def create_ticket(
         issue_type=issue_type,
         epic=epic if issue_type in REGULAR_ISSUE_TYPES else None,
         project=project,
+        sprint_position=SprintPosition.NEXT_SPRINT,
     )["key"]
 
 
@@ -211,6 +212,7 @@ def main() -> None:
             project=options.project,
             issue_type=options.issue_type,
             epic=options.epic,
+            sprint_position=SprintPosition.NEXT_SPRINT,
         )
         print(f"https://{j.base}/browse/{response['key']}")
     elif options.filename:

@@ -4,11 +4,19 @@ import base64
 import configparser
 import json
 import logging
+import re
 import urllib
 import urllib.parse
+from enum import Enum
 from typing import Any
 
 import requests
+
+
+class SprintPosition(Enum):
+    NEXT_SPRINT = "next sprint"
+    TOP_OF_BACKLOG = "top of backlog"
+    BOTTOM_OF_BACKLOG = "bottom of backlog"
 
 
 class JiraAPI:
@@ -130,6 +138,7 @@ class JiraAPI:
             issue_type: str | None,
             epic: str | None,
             project: str | None,
+        sprint_position: SprintPosition,
     ) -> dict:
         body = {
             "fields": {
@@ -149,9 +158,10 @@ class JiraAPI:
         body["fields"].update({"priority": {"name": self.priority}})
 
         if issue_type != "Epic":
-            next_sprint = self._get_next_sprint(self.board_id)
-            if next_sprint:
-                body["fields"].update({self.sprint_field: next_sprint})
+            if sprint_position == SprintPosition.NEXT_SPRINT:
+                next_sprint = self._get_next_sprint(self.board_id)
+                if next_sprint:
+                    body["fields"].update({self.sprint_field: next_sprint})
 
         for field, value in self.custom_fields.items():
             body["fields"].update({field: value})
