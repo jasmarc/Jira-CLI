@@ -126,11 +126,11 @@ def existing_ticket(summary: str) -> str | None:
 
 
 def create_ticket(
-        jira_api: JiraAPI,
-        summary: str,
-        issue_type: str,
-        epic: str | None,
-        project: str | None,
+    jira_api: JiraAPI,
+    summary: str,
+    issue_type: str,
+    epic: str | None,
+    project: str | None,
 ) -> str:
     return jira_api.create_ticket(
         summary,
@@ -143,7 +143,7 @@ def create_ticket(
 
 
 def verbose_output(
-        jira_api: JiraAPI, summary: str, ticket_id: str, issue_type: str, epic: str | None
+    jira_api: JiraAPI, summary: str, ticket_id: str, issue_type: str, epic: str | None
 ) -> str:
     url = f"https://{jira_api.base}/browse/{ticket_id}"
     created_or_found = "Found" if existing_ticket(summary) else "Created"
@@ -156,10 +156,10 @@ def verbose_output(
 
 
 def create_tickets_from_file(
-        jira_api: JiraAPI,
-        input_file: str,
-        verbose: bool = False,
-        project: str | None = None,
+    jira_api: JiraAPI,
+    input_file: str,
+    verbose: bool = False,
+    project: str | None = None,
 ) -> None:
     epic = None
     for line in input_file:

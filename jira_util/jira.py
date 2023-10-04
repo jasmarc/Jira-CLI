@@ -26,7 +26,7 @@ class JiraAPI:
     """
 
     def __init__(
-            self, config: configparser.ConfigParser, config_section: str = "JIRA"
+        self, config: configparser.ConfigParser, config_section: str = "JIRA"
     ) -> None:
         self.base = config.get(config_section, "BASE_URL")
         self.project = config.get(config_section, "PROJECT", fallback="MAR")
@@ -43,7 +43,7 @@ class JiraAPI:
 
     @staticmethod
     def _load_custom_fields(
-            config: configparser.ConfigParser, config_section: str
+        config: configparser.ConfigParser, config_section: str
     ) -> dict:
         custom_fields_section = config.get(config_section, "CUSTOM_FIELDS")
         field_value_pairs = custom_fields_section.split(",")
@@ -132,12 +132,12 @@ class JiraAPI:
         )
 
     def create_ticket(
-            self,
-            title: str,
-            description: str | None,
-            issue_type: str | None,
-            epic: str | None,
-            project: str | None,
+        self,
+        title: str,
+        description: str | None,
+        issue_type: str | None,
+        epic: str | None,
+        project: str | None,
         sprint_position: SprintPosition,
     ) -> dict:
         body = {
