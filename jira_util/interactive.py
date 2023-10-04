@@ -1,10 +1,6 @@
-import os
-
 import questionary
 from jira_util.jira import JiraAPI
 
-CONFIG_FILE = "../.jira-util.config"
-CONFIG_FILE_HOME = os.path.expanduser("~/.jira-util.config")
 
 
 

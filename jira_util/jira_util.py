@@ -8,14 +8,11 @@ import re
 import sys
 from pathlib import Path
 
+from jira_util.generate_config import CONFIG_FILE_HOME
 from jira_util.interactive import create_interactive_ticket
 from jira_util.jira import IssueType, JiraAPI, SprintPosition
 
 REGULAR_ISSUE_TYPES = ["Story", "Task", "Spike", "Bug"]
-
-# TODO: use same constants as in generate_config.py
-SCRIPT_CONFIG = Path(__file__).resolve().parent / ".." / ".jira-util.config"
-SCRIPT_CONFIG_HOME = Path.home() / ".jira-util.config"
 
 
 def read_script_config(config_file: Path) -> configparser.ConfigParser:
@@ -189,12 +186,8 @@ def create_tickets_from_file(
 def main() -> None:
     logging.basicConfig(level=logging.DEBUG)
 
-    # Try loading the configuration from SCRIPT_CONFIG_HOME
-    try:
-        config = read_script_config(SCRIPT_CONFIG_HOME)
-    except FileNotFoundError:
-        # If not found, load from SCRIPT_CONFIG
-        config = read_script_config(SCRIPT_CONFIG)
+    config = read_script_config(CONFIG_FILE_HOME)
+    logging.debug(CONFIG_FILE_HOME)
 
     options = parse_script_arguments()
     logging.info(options.interactive)
