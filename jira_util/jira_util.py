@@ -179,7 +179,6 @@ def main() -> None:
     logging.debug(CONFIG_FILE_HOME)
 
     options = parse_script_arguments()
-    logging.info(options.interactive)
 
     j = JiraAPI(config, config_section=options.config_section)
 
