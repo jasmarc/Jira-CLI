@@ -18,9 +18,7 @@ def create_interactive_ticket(jira_api: JiraAPI):
 
     active_epics = jira_api.get_active_epics()
     choices = [f"{epic['key']} {epic['fields']['summary']}" for epic in active_epics]
-    selected_epic_choice = questionary.select(
-        "Select an Epic:", choices=choices
-    ).ask()
+    selected_epic_choice = questionary.select("Select an Epic:", choices=choices).ask()
 
     selected_epic = selected_epic_choice.split()[0]
 
