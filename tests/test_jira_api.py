@@ -12,7 +12,7 @@ import requests
 import requests_mock
 from parameterized import parameterized
 
-from jira_util.jira import JiraAPI
+from jira_util.jira import JiraAPI, SprintPosition
 
 
 class TestJiraAPI(unittest.TestCase):
@@ -79,7 +79,9 @@ class TestJiraAPI(unittest.TestCase):
         try:
             result = self.jira_api.get_ticket(ticket)
         except requests.exceptions.HTTPError as ex:
-            self.assertEqual(ex.response.status_code, status_code)
+            response = ex.response
+            assert response is not None
+            self.assertEqual(response.status_code, status_code)
             if status_code == 404:
                 self.assertIn("404 Client Error: None", str(ex))
 
@@ -159,6 +161,7 @@ class TestJiraAPI(unittest.TestCase):
         issue_type = "Story"
         epic = None
         project = None
+        sprint_position = SprintPosition.NEXT_SPRINT
         status_code = 200
         response_json = {"key": "JIRA-123"}
 
@@ -179,7 +182,7 @@ class TestJiraAPI(unittest.TestCase):
         self.jira_api.api_token = api_token
 
         result = self.jira_api.create_ticket(
-            title, description, issue_type, epic, project
+            title, description, issue_type, epic, project, sprint_position
         )
 
         self.assertEqual(result, response_json)
@@ -204,6 +207,7 @@ class TestJiraAPI(unittest.TestCase):
                 "Story",
                 "EPIC-123",
                 None,
+                SprintPosition.NEXT_SPRINT,
                 200,
                 {
                     "key": "JIRA-123",
@@ -219,6 +223,7 @@ class TestJiraAPI(unittest.TestCase):
                 "Epic",
                 None,
                 None,
+                SprintPosition.NEXT_SPRINT,
                 200,
                 {
                     "key": "JIRA-124",
@@ -238,6 +243,7 @@ class TestJiraAPI(unittest.TestCase):
         issue_type: str,
         epic: str | None,
         project: str | None,
+        sprint_position: SprintPosition,
         status_code: int,
         response_json: dict | None,
         expected_auth_type: str,  # Add this parameter to the test case
@@ -258,7 +264,7 @@ class TestJiraAPI(unittest.TestCase):
         self.jira_api.auth = expected_auth_type
 
         result = self.jira_api.create_ticket(
-            title, description, issue_type, epic, project
+            title, description, issue_type, epic, project, sprint_position
         )
 
         self.assertEqual(result, response_json)
@@ -289,6 +295,7 @@ class TestJiraAPI(unittest.TestCase):
                 "Story",
                 None,
                 None,
+                SprintPosition.NEXT_SPRINT,
                 400,
                 {"errorMessages": ["Invalid input"]},
                 requests.exceptions.HTTPError(
@@ -302,6 +309,7 @@ class TestJiraAPI(unittest.TestCase):
                 "Story",
                 None,
                 None,
+                SprintPosition.NEXT_SPRINT,
                 500,
                 None,
                 requests.exceptions.RequestException("Connection error"),
@@ -317,6 +325,7 @@ class TestJiraAPI(unittest.TestCase):
         issue_type: str,
         epic: str | None,
         project: str | None,
+        sprint_position: SprintPosition,
         status_code: int,
         response_json: dict | None,
         exception_to_raise: Exception | None,
@@ -342,17 +351,19 @@ class TestJiraAPI(unittest.TestCase):
                 else requests.exceptions.HTTPError
             ) as context:
                 self.jira_api.create_ticket(
-                    title, description, issue_type, epic, project
+                    title, description, issue_type, epic, project, sprint_position
                 )
 
         if exception_to_raise:
             self.assertIn(f"ERROR:jira_util.jira:{exception_message}", cm.output[0])
 
         exception = context.exception
-        self.assertEqual(exception.response.status_code, status_code)
+        response = exception.response
+        assert response is not None
+        self.assertEqual(response.status_code, status_code)
         try:
             # Try to parse the response as JSON
-            got_response_json = exception.response.json()
+            got_response_json = response.json()
         except ValueError:
             got_response_json = None
 

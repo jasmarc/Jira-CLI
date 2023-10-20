@@ -3,26 +3,18 @@ from __future__ import annotations
 import configparser
 import json
 import os
+from pathlib import Path
 from urllib.parse import urlparse
 
 import questionary
 
-CONFIG_FILE = "../.jira-util.config"
-CONFIG_FILE_HOME = os.path.expanduser("~/.jira-util.config")
+CONFIG_FILE_HOME = Path.home() / ".jira-util.config"
 
 
-def read_config(config_file: str) -> configparser.ConfigParser:
+def read_config(config_file: Path) -> configparser.ConfigParser:
     c = configparser.ConfigParser()
     c.read(config_file)
     return c
-
-
-def get_config_file_location() -> str:
-    selected_location = questionary.select(
-        "Write the config file in:", choices=["Current Directory", "Home Directory"]
-    ).ask()
-
-    return "current" if selected_location == "Current Directory" else "home"
 
 
 def validate_base_url(url: str) -> str | bool:
@@ -123,12 +115,9 @@ def main() -> None:
         "This script will help you create a new configuration section for your Jira settings."
     )
 
-    config_file_location = get_config_file_location()
-    target_file = CONFIG_FILE if config_file_location == "current" else CONFIG_FILE_HOME
+    print(f"Your config file will be written to: {os.path.abspath(CONFIG_FILE_HOME)}")
 
-    print(f"Your config file will be written to: {os.path.abspath(target_file)}")
-
-    config = read_config(target_file)
+    config = read_config(CONFIG_FILE_HOME)
 
     new_section_name = ask_new_section_name(config.sections())
 
@@ -248,9 +237,9 @@ def main() -> None:
         )
         config.set(new_section_name, "custom_fields", formatted_custom_fields)
 
-    with open(target_file, "w") as configfile:
+    with open(CONFIG_FILE_HOME, "w") as configfile:
         config.write(configfile)
-        print(f"Configuration written to: {os.path.abspath(target_file)}")
+        print(f"Configuration written to: {os.path.abspath(CONFIG_FILE_HOME)}")
 
 
 if __name__ == "__main__":

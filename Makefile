@@ -1,8 +1,8 @@
 test:
-	coverage run --source=jira,jira_util -m unittest discover tests
+	coverage run --source=jira_util -m unittest discover tests
 	coverage report -m
 	coverage html
-	open htmlcov/jira_py.html
+	open htmlcov/index.html
 
 format:
 	pre-commit run -a

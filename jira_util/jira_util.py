@@ -8,14 +8,9 @@ import re
 import sys
 from pathlib import Path
 
+from jira_util.generate_config import CONFIG_FILE_HOME
 from jira_util.interactive import create_interactive_ticket
-from jira_util.jira import JiraAPI
-
-REGULAR_ISSUE_TYPES = ["Story", "Task", "Spike", "Bug"]
-
-# TODO: use same constants as in generate_config.py
-SCRIPT_CONFIG = Path(__file__).resolve().parent / ".." / ".jira-util.config"
-SCRIPT_CONFIG_HOME = Path.home() / ".jira-util.config"
+from jira_util.jira import IssueType, JiraAPI, SprintPosition
 
 
 def read_script_config(config_file: Path) -> configparser.ConfigParser:
@@ -71,15 +66,6 @@ Deliverable: Lorem ipsum dolor sit amet, consectetur
         help="set the epic to file the story under",
     )
     parser.add_argument(
-        "-s",
-        "--scrum",
-        metavar="scrum-team",
-        default=None,
-        type=str,
-        dest="scrum_name",
-        help="override the default scrum team from the config",
-    )
-    parser.add_argument(
         "-p",
         "--project",
         metavar="project",
@@ -100,7 +86,7 @@ Deliverable: Lorem ipsum dolor sit amet, consectetur
     parser.add_argument(
         "--env",
         dest="config_section",
-        default="default",
+        default="JIRA",
         help="Specify the environment to use for configuration",
     )
     parser.add_argument(
@@ -129,39 +115,40 @@ def existing_ticket(summary: str) -> str | None:
 
 
 def create_ticket(
-        jira_api: JiraAPI,
-        summary: str,
-        issue_type: str,
-        epic: str | None,
-        project: str | None,
+    jira_api: JiraAPI,
+    summary: str,
+    issue_type: str,
+    epic: str | None,
+    project: str | None,
 ) -> str:
     return jira_api.create_ticket(
         summary,
         summary,
         issue_type=issue_type,
-        epic=epic if issue_type in REGULAR_ISSUE_TYPES else None,
+        epic=epic if issue_type in IssueType else None,
         project=project,
+        sprint_position=SprintPosition.NEXT_SPRINT,
     )["key"]
 
 
 def verbose_output(
-        jira_api: JiraAPI, summary: str, ticket_id: str, issue_type: str, epic: str | None
+    jira_api: JiraAPI, summary: str, ticket_id: str, issue_type: str, epic: str | None
 ) -> str:
     url = f"https://{jira_api.base}/browse/{ticket_id}"
     created_or_found = "Found" if existing_ticket(summary) else "Created"
     if issue_type == "Epic":
         return f"\t{created_or_found} {issue_type} {url}"
-    elif issue_type in REGULAR_ISSUE_TYPES:
+    elif IssueType.is_valid(issue_type):
         return f"\t\t{created_or_found} {issue_type} {url}, epic is {epic}"
     else:
         raise ValueError(f"Unknown issue type {issue_type}")
 
 
 def create_tickets_from_file(
-        jira_api: JiraAPI,
-        input_file: str,
-        verbose: bool = False,
-        project: str | None = None,
+    jira_api: JiraAPI,
+    input_file: str,
+    verbose: bool = False,
+    project: str | None = None,
 ) -> None:
     epic = None
     for line in input_file:
@@ -178,7 +165,7 @@ def create_tickets_from_file(
 
         if issue_type == "Epic":
             epic = ticket_id
-        elif issue_type in REGULAR_ISSUE_TYPES and existing_ticket(summary) and epic:
+        elif IssueType.is_valid(issue_type) and existing_ticket(summary) and epic:
             jira_api.set_epic(ticket_id, epic)
 
         if verbose:
@@ -186,24 +173,20 @@ def create_tickets_from_file(
 
 
 def main() -> None:
-    logging.basicConfig(level=logging.DEBUG)
+    logging.basicConfig(level=logging.INFO)
 
-    # Try loading the configuration from SCRIPT_CONFIG_HOME
-    try:
-        config = read_script_config(SCRIPT_CONFIG_HOME)
-    except FileNotFoundError:
-        # If not found, load from SCRIPT_CONFIG
-        config = read_script_config(SCRIPT_CONFIG)
+    config = read_script_config(CONFIG_FILE_HOME)
+    logging.debug(CONFIG_FILE_HOME)
 
     options = parse_script_arguments()
-    logging.info(options.interactive)
 
     j = JiraAPI(config, config_section=options.config_section)
 
     if options.get_ticket:
         print(json.dumps(j.get_ticket(options.get_ticket), indent=4, sort_keys=True))
     elif options.interactive:
-        create_interactive_ticket(j)
+        response = create_interactive_ticket(j, options.project)
+        print(f"https://{j.base}/browse/{response['key']}")
     elif options.create_ticket:
         response = j.create_ticket(
             options.create_ticket,
@@ -211,6 +194,7 @@ def main() -> None:
             project=options.project,
             issue_type=options.issue_type,
             epic=options.epic,
+            sprint_position=SprintPosition.NEXT_SPRINT,
         )
         print(f"https://{j.base}/browse/{response['key']}")
     elif options.filename:

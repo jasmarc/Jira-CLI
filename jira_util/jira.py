@@ -6,9 +6,33 @@ import json
 import logging
 import urllib
 import urllib.parse
+from enum import Enum
 from typing import Any
 
 import requests
+from requests import Response, codes
+
+
+class IssueType(Enum):
+    STORY = "Story"
+    TASK = "Task"
+    SPIKE = "Spike"
+    BUG = "Bug"
+
+    @classmethod
+    def is_valid(cls, input_string: str) -> bool:
+        """
+        Indicates whether the given string is a valid enum value
+        @param input_string:
+        @return: True if the given string is a valid enum value
+        """
+        return input_string in cls.__members__
+
+
+class SprintPosition(Enum):
+    NEXT_SPRINT = "next sprint"
+    TOP_OF_BACKLOG = "top of backlog"
+    BOTTOM_OF_BACKLOG = "bottom of backlog"
 
 
 class JiraAPI:
@@ -18,10 +42,10 @@ class JiraAPI:
     """
 
     def __init__(
-            self, config: configparser.ConfigParser, config_section: str = "JIRA"
+        self, config: configparser.ConfigParser, config_section: str = "JIRA"
     ) -> None:
         self.base = config.get(config_section, "BASE_URL")
-        self.project = config.get(config_section, "PROJECT", fallback="MAR")
+        self.project = config.get(config_section, "PROJECT")
         self.user = config.get(config_section, "USER")
         self.auth = config.get(config_section, "AUTH")
         self.api_token = config.get(config_section, "API_TOKEN")
@@ -35,7 +59,7 @@ class JiraAPI:
 
     @staticmethod
     def _load_custom_fields(
-            config: configparser.ConfigParser, config_section: str
+        config: configparser.ConfigParser, config_section: str
     ) -> dict:
         custom_fields_section = config.get(config_section, "CUSTOM_FIELDS")
         field_value_pairs = custom_fields_section.split(",")
@@ -48,13 +72,32 @@ class JiraAPI:
                 custom_fields[field] = value
         return custom_fields
 
+    @staticmethod
+    def _parse_params(params: dict) -> str:
+        if not params:
+            return ""
+        param_list = [f"{key}={value}" for key, value in params.items()]
+        params_string = "?" + "&".join(param_list)
+        return params_string
+
+    @staticmethod
+    def _parse_response(r: Response) -> dict:
+        try:
+            if r.ok and r.status_code != codes.NO_CONTENT:
+                return r.json()
+            else:
+                return {}
+        except ValueError:
+            return {}
+
     def _api_request(self, method: str, query: str, *args: str, **kwargs: Any) -> dict:
         url = urllib.parse.urlunsplit(
             ("https", self.base, query.format(*args), None, None)
         )
 
+        query_params: dict = kwargs.get("params", {})
         logging.debug(
-            f'\n{method} {url}\n{json.dumps(kwargs.get("json"), sort_keys=True, indent=4)}'
+            f'\n{method} {url}{self._parse_params(query_params)}\n{json.dumps(kwargs.get("json"), sort_keys=True, indent=4)}'
         )
 
         if self.auth == "basic":
@@ -72,8 +115,9 @@ class JiraAPI:
                 **kwargs,
             )
             response.raise_for_status()
+            response_json = self._parse_response(response)
             logging.debug(
-                f'\n{json.dumps(response.json(), sort_keys=True, indent=4)}\n{method} {url}\n{json.dumps(kwargs.get("json"), sort_keys=True, indent=4)}'
+                f'\n{json.dumps(response_json, sort_keys=True, indent=4)}\n{method} {url}\n{json.dumps(kwargs.get("json"), sort_keys=True, indent=4)}'
             )
 
         except requests.exceptions.HTTPError:
@@ -82,7 +126,7 @@ class JiraAPI:
         except requests.exceptions.RequestException as ex:
             self.logger.error(f"Request error: {ex}")
             raise
-        return response.json() if response.status_code // 100 == 2 else {}
+        return response_json
 
     def get_comment(self, ticket: str) -> dict:
         return self._api_request("GET", "/rest/api/2/issue/{}/comment", ticket)
@@ -105,6 +149,42 @@ class JiraAPI:
         next_sprint: dict = next(iter(upcoming_sprints), {})
         return next_sprint.get("id", "")
 
+    def get_active_epics(self) -> list[dict]:
+        # Initialize an empty list to store JQL clauses
+        jql_clauses = []
+
+        # Iterate over the dictionary items and format them as JQL clauses
+        for field, value in self.custom_fields.items():
+            field_name = field.replace("customfield_", "")
+            if isinstance(value, dict):
+                # Handle dictionary values
+                value_str = ", ".join([f"'{v}'" for _, v in value.items()])
+                jql_clause = f"cf[{field_name}] = {value_str}"
+            else:
+                # Handle non-dictionary values
+                jql_clause = f"cf[{field_name}] ~ '{value}'"
+            jql_clauses.append(jql_clause)
+
+        # Join the JQL clauses with ' OR ' to create the final JQL query
+        jql_query = " OR ".join(jql_clauses)
+
+        jql = (
+            f"issuetype = Epic "
+            f"AND project = {self.project} "
+            f"AND ({jql_query}) "
+            f"AND status = 'In Progress' "
+            f"ORDER BY summary ASC"
+        )
+
+        logging.debug({"jql": jql})
+        query_params = {
+            "jql": jql,
+            "fields": "key,summary",
+            "maxResults": 100,
+        }
+        response = self._api_request("GET", "/rest/api/2/search", params=query_params)
+        return response.get("issues", [])
+
     def set_epic(self, ticket: str, parent_epic: str) -> dict:
         return self._api_request(
             "PUT",
@@ -113,13 +193,28 @@ class JiraAPI:
             json={"fields": {self.epic_field: parent_epic}},
         )
 
+    def _move_issue_to_backlog_position(
+        self, issue_key: str, position: SprintPosition
+    ) -> None:
+        data = {"issues": [issue_key]}
+
+        if position == SprintPosition.BOTTOM_OF_BACKLOG:
+            params = {"rankAfterIssue": "last"}
+        elif position == SprintPosition.TOP_OF_BACKLOG:
+            params = {"rankBeforeIssue": "first"}
+
+        self._api_request(
+            "POST", "/rest/agile/1.0/backlog/issue", json=data, params=params
+        )
+
     def create_ticket(
-            self,
-            title: str,
-            description: str | None,
-            issue_type: str | None,
-            epic: str | None,
-            project: str | None,
+        self,
+        title: str,
+        description: str | None,
+        issue_type: str | None,
+        epic: str | None,
+        project: str | None,
+        sprint_position: SprintPosition,
     ) -> dict:
         body = {
             "fields": {
@@ -139,11 +234,20 @@ class JiraAPI:
         body["fields"].update({"priority": {"name": self.priority}})
 
         if issue_type != "Epic":
-            next_sprint = self._get_next_sprint(self.board_id)
-            if next_sprint:
-                body["fields"].update({self.sprint_field: next_sprint})
+            if sprint_position == SprintPosition.NEXT_SPRINT:
+                next_sprint = self._get_next_sprint(self.board_id)
+                if next_sprint:
+                    body["fields"].update({self.sprint_field: next_sprint})
 
         for field, value in self.custom_fields.items():
             body["fields"].update({field: value})
 
-        return self._api_request("POST", "/rest/api/2/issue", json=body)
+        created_issue = self._api_request("POST", "/rest/api/2/issue", json=body)
+
+        if created_issue and sprint_position in (
+            SprintPosition.TOP_OF_BACKLOG,
+            SprintPosition.BOTTOM_OF_BACKLOG,
+        ):
+            self._move_issue_to_backlog_position(created_issue["key"], sprint_position)
+
+        return created_issue
