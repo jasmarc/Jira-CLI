@@ -10,7 +10,7 @@ from enum import Enum
 from typing import Any
 
 import requests
-from requests import codes
+from requests import Response, codes
 
 
 class IssueType(Enum):
@@ -72,29 +72,32 @@ class JiraAPI:
                 custom_fields[field] = value
         return custom_fields
 
-    def _api_request(self, method: str, query: str, *args: str, **kwargs: Any) -> dict:
-        def _parse_params(params):
-            if not params:
-                return None
-            param_list = [f"{key}={value}" for key, value in params.items()]
-            params_string = "?" + "&".join(param_list)
-            return params_string
+    @staticmethod
+    def _parse_params(params: dict) -> str:
+        if not params:
+            return ""
+        param_list = [f"{key}={value}" for key, value in params.items()]
+        params_string = "?" + "&".join(param_list)
+        return params_string
 
-        def _parse_response(r):
-            try:
-                if r.ok and r.status_code != codes.NO_CONTENT:
-                    return r.json()
-                else:
-                    return {}
-            except ValueError:
+    @staticmethod
+    def _parse_response(r: Response) -> dict:
+        try:
+            if r.ok and r.status_code != codes.NO_CONTENT:
+                return r.json()
+            else:
                 return {}
+        except ValueError:
+            return {}
 
+    def _api_request(self, method: str, query: str, *args: str, **kwargs: Any) -> dict:
         url = urllib.parse.urlunsplit(
             ("https", self.base, query.format(*args), None, None)
         )
 
+        query_params: dict = kwargs.get("params", {})
         logging.debug(
-            f'\n{method} {url}{_parse_params(kwargs.get("params"))}\n{json.dumps(kwargs.get("json"), sort_keys=True, indent=4)}'
+            f'\n{method} {url}{self._parse_params(query_params)}\n{json.dumps(kwargs.get("json"), sort_keys=True, indent=4)}'
         )
 
         if self.auth == "basic":
@@ -112,7 +115,7 @@ class JiraAPI:
                 **kwargs,
             )
             response.raise_for_status()
-            response_json = _parse_response(response)
+            response_json = self._parse_response(response)
             logging.debug(
                 f'\n{json.dumps(response_json, sort_keys=True, indent=4)}\n{method} {url}\n{json.dumps(kwargs.get("json"), sort_keys=True, indent=4)}'
             )
@@ -191,16 +194,18 @@ class JiraAPI:
         )
 
     def _move_issue_to_backlog_position(
-            self, issue_key: str, position: SprintPosition
+        self, issue_key: str, position: SprintPosition
     ) -> None:
-        data = {'issues': [issue_key]}
+        data = {"issues": [issue_key]}
 
         if position == SprintPosition.BOTTOM_OF_BACKLOG:
             params = {"rankAfterIssue": "last"}
         elif position == SprintPosition.TOP_OF_BACKLOG:
             params = {"rankBeforeIssue": "first"}
 
-        self._api_request("POST", "/rest/agile/1.0/backlog/issue", json=data, params=params)
+        self._api_request(
+            "POST", "/rest/agile/1.0/backlog/issue", json=data, params=params
+        )
 
     def create_ticket(
         self,

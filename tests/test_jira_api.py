@@ -79,7 +79,9 @@ class TestJiraAPI(unittest.TestCase):
         try:
             result = self.jira_api.get_ticket(ticket)
         except requests.exceptions.HTTPError as ex:
-            self.assertEqual(ex.response.status_code, status_code)
+            response = ex.response
+            assert response is not None
+            self.assertEqual(response.status_code, status_code)
             if status_code == 404:
                 self.assertIn("404 Client Error: None", str(ex))
 
@@ -356,10 +358,12 @@ class TestJiraAPI(unittest.TestCase):
             self.assertIn(f"ERROR:jira_util.jira:{exception_message}", cm.output[0])
 
         exception = context.exception
-        self.assertEqual(exception.response.status_code, status_code)
+        response = exception.response
+        assert response is not None
+        self.assertEqual(response.status_code, status_code)
         try:
             # Try to parse the response as JSON
-            got_response_json = exception.response.json()
+            got_response_json = response.json()
         except ValueError:
             got_response_json = None
 
