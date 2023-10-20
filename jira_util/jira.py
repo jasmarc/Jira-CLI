@@ -155,23 +155,25 @@ class JiraAPI:
             field_name = field.replace("customfield_", "")
             if isinstance(value, dict):
                 # Handle dictionary values
-                value_str = ', '.join([f"'{v}'" for _, v in value.items()])
-                jql_clause = f'cf[{field_name}] = {value_str}'
+                value_str = ", ".join([f"'{v}'" for _, v in value.items()])
+                jql_clause = f"cf[{field_name}] = {value_str}"
             else:
                 # Handle non-dictionary values
-                jql_clause = f'cf[{field_name}] ~ \'{value}\''
+                jql_clause = f"cf[{field_name}] ~ '{value}'"
             jql_clauses.append(jql_clause)
 
         # Join the JQL clauses with ' OR ' to create the final JQL query
-        jql_query = ' OR '.join(jql_clauses)
+        jql_query = " OR ".join(jql_clauses)
 
-        jql = f"issuetype = Epic " \
-              f"AND project = {self.project} " \
-              f"AND ({jql_query}) " \
-              f"AND status = 'In Progress' " \
-              f"ORDER BY summary ASC"
+        jql = (
+            f"issuetype = Epic "
+            f"AND project = {self.project} "
+            f"AND ({jql_query}) "
+            f"AND status = 'In Progress' "
+            f"ORDER BY summary ASC"
+        )
 
-        logging.debug({'jql': jql})
+        logging.debug({"jql": jql})
         query_params = {
             "jql": jql,
             "fields": "key,summary",
