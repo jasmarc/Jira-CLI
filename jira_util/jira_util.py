@@ -96,6 +96,13 @@ Deliverable: Lorem ipsum dolor sit amet, consectetur
         help="create a Jira ticket interactively",
     )
     parser.add_argument(
+        "-d",
+        "--debug",
+        default=False,
+        action="store_true",
+        help="Enable DEBUG log level (default is INFO)",
+    )
+    parser.add_argument(
         "-v",
         "--verbose",
         default=False,
@@ -173,12 +180,11 @@ def create_tickets_from_file(
 
 
 def main() -> None:
-    logging.basicConfig(level=logging.INFO)
+    options = parse_script_arguments()
+    logging.basicConfig(level=logging.DEBUG if options.debug else logging.INFO)
 
     config = read_script_config(CONFIG_FILE_HOME)
     logging.debug(CONFIG_FILE_HOME)
-
-    options = parse_script_arguments()
 
     j = JiraAPI(config, config_section=options.config_section)
 
