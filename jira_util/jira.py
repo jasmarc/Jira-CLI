@@ -4,13 +4,13 @@ import base64
 import configparser
 import json
 import logging
-import re
 import urllib
 import urllib.parse
 from enum import Enum
 from typing import Any
 
 import requests
+from requests import codes
 
 
 class IssueType(Enum):
@@ -73,12 +73,28 @@ class JiraAPI:
         return custom_fields
 
     def _api_request(self, method: str, query: str, *args: str, **kwargs: Any) -> dict:
+        def _parse_params(params):
+            if not params:
+                return None
+            param_list = [f"{key}={value}" for key, value in params.items()]
+            params_string = "?" + "&".join(param_list)
+            return params_string
+
+        def _parse_response(r):
+            try:
+                if r.ok and r.status_code != codes.NO_CONTENT:
+                    return r.json()
+                else:
+                    return {}
+            except ValueError:
+                return {}
+
         url = urllib.parse.urlunsplit(
             ("https", self.base, query.format(*args), None, None)
         )
 
         logging.debug(
-            f'\n{method} {url}\n{json.dumps(kwargs.get("json"), sort_keys=True, indent=4)}'
+            f'\n{method} {url}{_parse_params(kwargs.get("params"))}\n{json.dumps(kwargs.get("json"), sort_keys=True, indent=4)}'
         )
 
         if self.auth == "basic":
@@ -96,8 +112,9 @@ class JiraAPI:
                 **kwargs,
             )
             response.raise_for_status()
+            response_json = _parse_response(response)
             logging.debug(
-                f'\n{json.dumps(response.json(), sort_keys=True, indent=4)}\n{method} {url}\n{json.dumps(kwargs.get("json"), sort_keys=True, indent=4)}'
+                f'\n{json.dumps(response_json, sort_keys=True, indent=4)}\n{method} {url}\n{json.dumps(kwargs.get("json"), sort_keys=True, indent=4)}'
             )
 
         except requests.exceptions.HTTPError:
@@ -106,7 +123,7 @@ class JiraAPI:
         except requests.exceptions.RequestException as ex:
             self.logger.error(f"Request error: {ex}")
             raise
-        return response.json() if response.status_code // 100 == 2 else {}
+        return response_json
 
     def get_comment(self, ticket: str) -> dict:
         return self._api_request("GET", "/rest/api/2/issue/{}/comment", ticket)
