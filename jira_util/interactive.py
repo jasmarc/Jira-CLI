@@ -30,6 +30,7 @@ def create_interactive_ticket(jira_api: JiraAPI, project: str) -> dict:
     selected_sprint = questionary.select(
         "Select a Sprint (Location):", choices=sprint_choices
     ).ask()
+    selected_sprint = SprintPosition(selected_sprint)
 
     title = questionary.text("Enter Title:").ask()
 

@@ -190,6 +190,18 @@ class JiraAPI:
             json={"fields": {self.epic_field: parent_epic}},
         )
 
+    def _move_issue_to_backlog_position(
+            self, issue_key: str, position: SprintPosition
+    ) -> None:
+        data = {'issues': [issue_key]}
+
+        if position == SprintPosition.BOTTOM_OF_BACKLOG:
+            params = {"rankAfterIssue": "last"}
+        elif position == SprintPosition.TOP_OF_BACKLOG:
+            params = {"rankBeforeIssue": "first"}
+
+        self._api_request("POST", "/rest/agile/1.0/backlog/issue", json=data, params=params)
+
     def create_ticket(
         self,
         title: str,
@@ -225,4 +237,12 @@ class JiraAPI:
         for field, value in self.custom_fields.items():
             body["fields"].update({field: value})
 
-        return self._api_request("POST", "/rest/api/2/issue", json=body)
+        created_issue = self._api_request("POST", "/rest/api/2/issue", json=body)
+
+        if created_issue and sprint_position in (
+            SprintPosition.TOP_OF_BACKLOG,
+            SprintPosition.BOTTOM_OF_BACKLOG,
+        ):
+            self._move_issue_to_backlog_position(created_issue["key"], sprint_position)
+
+        return created_issue
