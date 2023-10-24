@@ -6,6 +6,7 @@ import json
 import logging
 import re
 import sys
+from importlib import metadata
 from pathlib import Path
 
 from jira_util.generate_config import CONFIG_FILE_HOME
@@ -103,6 +104,11 @@ Deliverable: Lorem ipsum dolor sit amet, consectetur
         help="Enable DEBUG log level (default is INFO)",
     )
     parser.add_argument(
+        "--version",
+        action="store_true",
+        help="Print the version and exit",
+    )
+    parser.add_argument(
         "-v",
         "--verbose",
         default=False,
@@ -110,6 +116,11 @@ Deliverable: Lorem ipsum dolor sit amet, consectetur
         help="display verbose output",
     )
     opt = parser.parse_args()
+    if opt.version:
+        version = metadata.version('jira_util')
+        script_name = metadata.distribution('jira_util').name
+        print(f"{script_name} version {version}")
+        sys.exit(0)
     if not any([opt.filename, opt.create_ticket, opt.get_ticket, opt.interactive]):
         parser.print_help(sys.stderr)
         sys.exit(1)
