@@ -2,7 +2,7 @@ from setuptools import find_packages, setup
 
 setup(
     name="jira-util",
-    version="0.2.0",
+    version="0.2.1",
     description="CLI utility for quickly creating Jira tickets",
     author="Jason Marcell",
     author_email="jasonmarcell@gmail.com",
