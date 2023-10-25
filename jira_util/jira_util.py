@@ -6,7 +6,10 @@ import json
 import logging
 import re
 import sys
-from importlib import metadata
+if sys.version_info >= (3, 8):
+    from importlib import metadata
+else:
+    import importlib_metadata as metadata
 from pathlib import Path
 
 from jira_util.generate_config import CONFIG_FILE_HOME
@@ -118,8 +121,7 @@ Deliverable: Lorem ipsum dolor sit amet, consectetur
     opt = parser.parse_args()
     if opt.version:
         version = metadata.version('jira_util')
-        script_name = metadata.distribution('jira_util').name
-        print(f"{script_name} version {version}")
+        print(f"jira-util version {version}")
         sys.exit(0)
     if not any([opt.filename, opt.create_ticket, opt.get_ticket, opt.interactive]):
         parser.print_help(sys.stderr)
