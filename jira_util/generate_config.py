@@ -109,7 +109,7 @@ def ask_new_section_name(existing_sections: list[str]) -> str:
         return section_menu
 
 
-def main() -> None:
+def main() -> configparser.ConfigParser:
     print("Welcome to the Jira Configuration Generator!")
     print(
         "This script will help you create a new configuration section for your Jira settings."
@@ -132,7 +132,7 @@ def main() -> None:
             defaults = get_existing_values(config[new_section_name])
         else:
             print("Aborting...")
-            return
+            exit(1)
     defaults = defaults if "defaults" in locals() else {}
 
     print(
@@ -141,10 +141,10 @@ def main() -> None:
 
     config.set(
         new_section_name,
-        "user",
+        "USER",
         questionary.text(
             "User name (e.g., your_email@example.com):",
-            default=defaults.get("user", "") if defaults else "",
+            default=defaults.get("USER", "") if defaults else "",
         ).ask(),
     )
 
@@ -158,66 +158,66 @@ def main() -> None:
     ).ask()
     config.set(
         new_section_name,
-        "auth",
+        "AUTH",
         "Basic"
         if selected_auth
         == "Basic Authentication (Username and API Token/Password/Secret)"
         else "Token",
     )
 
-    api_token = get_api_token(default=defaults.get("api_token", ""))
-    config.set(new_section_name, "api_token", api_token)
+    api_token = get_api_token(default=defaults.get("API_TOKEN", ""))
+    config.set(new_section_name, "API_TOKEN", api_token)
 
-    base_url = get_base_url(default=defaults.get("base_url", ""))
+    base_url = get_base_url(default=defaults.get("BASE_URL", ""))
     if validate_base_url(base_url):
         parsed_url = urlparse(base_url)
         base_url = parsed_url.netloc
-        config.set(new_section_name, "base_url", base_url)
+        config.set(new_section_name, "BASE_URL", base_url)
     else:
         print("Invalid Base URL. Aborting...")
-        return
+        exit(1)
 
     config.set(
         new_section_name,
-        "project",
+        "PROJECT",
         questionary.text(
-            "Project Key (e.g., JU2):",
-            default=defaults.get("project", "") if defaults else "",
+            "Project Key:",
+            default=defaults.get("PROJECT", "") if defaults else "",
         ).ask(),
     )
     config.set(
         new_section_name,
-        "epic_field_id",
+        "EPIC_FIELD",
         questionary.text(
             "Epic Field ID (e.g., customfield_100187):",
-            default=defaults.get("epic_field_id", ""),
+            default=defaults.get("EPIC_FIELD", ""),
             validate=validate_custom_field_id,
         ).ask(),
     )
     config.set(
         new_section_name,
-        "epic_name_field_id",
+        "EPIC_NAME_FIELD",
         questionary.text(
             "Epic Name Field ID (e.g., customfield_10011):",
-            default=defaults.get("epic_name_field_id", ""),
+            default=defaults.get("EPIC_NAME_FIELD", ""),
             validate=validate_custom_field_id,
         ).ask(),
     )
     config.set(
         new_section_name,
-        "sprint_field_id",
+        "SPRINT_FIELD",
         questionary.text(
             "Sprint Field ID (e.g., customfield_100234):",
-            default=defaults.get("sprint_field_id", ""),
+            default=defaults.get("SPRINT_FIELD", ""),
             validate=validate_custom_field_id,
         ).ask(),
     )
     config.set(
         new_section_name,
-        "board_id",
+        "BOARD_ID",
         questionary.text(
             "Board ID:",
-            default=defaults.get("board_id", ""),
+            default=defaults.get("BOARD_ID", ""),
             validate=validate_board_id,
         ).ask(),
     )
@@ -226,20 +226,21 @@ def main() -> None:
     selected_priority = questionary.select(
         "Priority:",
         choices=priority_options,
-        default=defaults.get("priority", "Medium") if defaults else "Medium",
+        default=defaults.get("PRIORITY", "Medium") if defaults else "Medium",
     ).ask()
-    config.set(new_section_name, "priority", selected_priority)
+    config.set(new_section_name, "PRIORITY", selected_priority)
 
     custom_fields = get_custom_fields()
     if custom_fields:
         formatted_custom_fields = ",".join(
             [f"{key}={value}" for key, value in custom_fields.items()]
         )
-        config.set(new_section_name, "custom_fields", formatted_custom_fields)
+        config.set(new_section_name, "CUSTOM_FIELDS", formatted_custom_fields)
 
     with open(CONFIG_FILE_HOME, "w") as configfile:
         config.write(configfile)
         print(f"Configuration written to: {os.path.abspath(CONFIG_FILE_HOME)}")
+    return config
 
 
 if __name__ == "__main__":
