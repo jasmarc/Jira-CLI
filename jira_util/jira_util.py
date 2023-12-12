@@ -12,15 +12,21 @@ else:
     import importlib_metadata as metadata
 from pathlib import Path
 
-from jira_util.generate_config import CONFIG_FILE_HOME
+from jira_util.generate_config import CONFIG_FILE_HOME, main as generate_config
 from jira_util.interactive import create_interactive_ticket
 from jira_util.jira import IssueType, JiraAPI, SprintPosition
 
 
-def read_script_config(config_file: Path) -> configparser.ConfigParser:
-    c = configparser.ConfigParser()
-    c.read(config_file)
-    return c
+def read_script_config(config_file: Path) -> configparser.ConfigParser | None:
+    if not config_file:
+        config_file = CONFIG_FILE_HOME
+    if config_file.exists():
+        c = configparser.ConfigParser()
+        c.read(config_file)
+        return c
+    else:
+        config = None
+    return config
 
 
 def parse_script_arguments() -> argparse.Namespace:
@@ -47,7 +53,7 @@ Deliverable: Lorem ipsum dolor sit amet, consectetur
     parser.add_argument(
         "-j",
         "--get-ticket-json",
-        metavar="MAR-123",
+        metavar="XXX-123",
         type=str,
         dest="get_ticket",
         help="return the ticket info as json",
@@ -118,12 +124,18 @@ Deliverable: Lorem ipsum dolor sit amet, consectetur
         action="store_true",
         help="display verbose output",
     )
+    parser.add_argument(
+        "--init-config",
+        default=False,
+        action="store_true",
+        help="initialize the config file",
+    )
     opt = parser.parse_args()
     if opt.version:
         version = metadata.version('jira_util')
         print(f"jira-util version {version}")
         sys.exit(0)
-    if not any([opt.filename, opt.create_ticket, opt.get_ticket, opt.interactive]):
+    if not any([opt.filename, opt.create_ticket, opt.get_ticket, opt.interactive, opt.init_config]):
         parser.print_help(sys.stderr)
         sys.exit(1)
     return opt
@@ -197,7 +209,11 @@ def main() -> None:
     logging.basicConfig(level=logging.DEBUG if options.debug else logging.INFO)
 
     config = read_script_config(CONFIG_FILE_HOME)
-    logging.debug(CONFIG_FILE_HOME)
+    if options.init_config or not config:
+        print("Generating configuration...")
+        config = generate_config()
+        if options.init_config:
+            exit(0)
 
     j = JiraAPI(config, config_section=options.config_section)
 
