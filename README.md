@@ -3,7 +3,7 @@
 Utility for programmatic interaction with Jira.
 
 ```shell
-usage: jira-util.py [-h] [-f FILENAME] [-j MAR-123] [-v]
+usage: jira-util [-h] [-f FILENAME] [-j XXX-123] [-c Summary] [-e epic] [-p project] [-i issue-type] [--env CONFIG_SECTION] [--interactive] [-d] [--version] [-v]
 
 CLI for interacting with Jira.
 
@@ -21,49 +21,36 @@ optional arguments:
   -h, --help            show this help message and exit
   -f FILENAME, --filename FILENAME
                         name of file containing ticket info
-  -j MAR-123, --get-ticket-json MAR-123
+  -j XXX-123, --get-ticket-json XXX-123
                         return the ticket info as json
+  -c Summary, --create-ticket Summary
+                        create a new ticket with the given summary
+  -e epic, --epic epic  set the epic to file the story under
+  -p project, --project project
+                        override the default project from the config
+  -i issue-type, --issue-type issue-type
+                        override the default project from the config
+  --env CONFIG_SECTION  Specify the environment to use for configuration
+  --interactive         create a Jira ticket interactively
+  -d, --debug           Enable DEBUG log level (default is INFO)
+  --version             Print the version and exit
   -v, --verbose         display verbose output
+
 ```
 
 ## Getting Started
 
-- Install `pipenv` if you haven't already:
+### Install
 
-  ```shell
-  pip install pipenv
-  ```
+```
+pip install git+https://github.com/jasmarc/Jira-CLI.git
+```
 
-- Navigate to the project directory in your terminal.
+### Initialize your config file
 
-- Create a virtual environment and install dependencies using `pipenv`:
-
-  ```shell
-  pipenv install --dev
-  ```
-
-- Copy `.jira-util.config.template` to `.jira-util.config` and open it:
-
-  ```shell
-  cp .jira-util.config.template .jira-util.config
-  ```
-
-- Fill out the `USER` and `API_TOKEN` fields in `.jira-util.config`
-  (see [here](https://support.atlassian.com/atlassian-account/docs/manage-api-tokens-for-your-atlassian-account/)
-  for more details).
-
-- Run tests and other tasks using `pipenv`:
-
-  ```shell
-  pipenv run make test
-  # ... other commands ...
-  ```
-
-- When you're done, exit the virtual environment:
-
-  ```shell
-  exit
-  ```
+```
+jira-util --init-config
+```
 
 ## Usage
 
@@ -72,7 +59,19 @@ optional arguments:
 This will dump the Jira ticket as a JSON blob:
 
 ```shell
-python jira-util.py -j MAR-7335
+jira-util -j XXX-1234
+```
+
+### Create a ticket from CLI
+
+```shell
+jira-util --epic XXX-1234 --issue-type Task --create-ticket "Ticket description"  
+```
+
+### Create a ticket from CLI Interactively
+
+```shell
+jira-util --env DEV --interactive
 ```
 
 ### Creating tickets from a file
@@ -87,7 +86,7 @@ Deliverable: Lorem ipsum dolor sit amet, consectetur
   Story: Phasellus at libero placerat, ornare urna
   Story: eget, blandit lectus. Vestibulum id diam
  # Epic already exists
- Epic: MAR-123
+ Epic: XXX-123
   Story: Quisque pulvinar erat eget diam fermentum, vel
   Story: bibendum erat rhoncus. Phasellus mauris enim,
 # Deliverable already exists
@@ -100,7 +99,7 @@ Deliverable: MAR-234
 Given a file in this format you may invoke ticket creation as follows:
 
 ```shell
-python jira-util.py -v -f example-input.txt
+jira-util -v -f example-input.txt
 ```
 
 **Notes:**
@@ -114,5 +113,5 @@ python jira-util.py -v -f example-input.txt
 - If only Stories are present they will be orphaned and not associated with an Epic or Deliverable.
 - If only Stories and Epics are present the stories will be linked to the Epic(s) but not associated with a
   Deliverable.
-- If a ticket id is specified (e.g. `MAR-123`) instead of a summary, that existing ticket will be used instead
+- If a ticket id is specified (e.g. `XXX-123`) instead of a summary, that existing ticket will be used instead
   of creating a new ticket.

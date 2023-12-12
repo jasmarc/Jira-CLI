@@ -53,7 +53,7 @@ Deliverable: Lorem ipsum dolor sit amet, consectetur
     parser.add_argument(
         "-j",
         "--get-ticket-json",
-        metavar="MAR-123",
+        metavar="XXX-123",
         type=str,
         dest="get_ticket",
         help="return the ticket info as json",
